@@ -66,6 +66,27 @@ initial_query = json.loads('''{
 }
 ''')
 
+initial_query = json.loads('''{
+  "condition": "AND",
+  "rules": [
+    {
+      "field": "table.confidence",
+      "operator": "greater_or_equal",
+      "value": 60
+    },
+    {
+      "field": "table.port",
+      "operator": "equal",
+      "value": 5900
+    },
+    {
+      "field": "table.state",
+      "operator": "equal",
+      "value": "open"
+    }
+  ],
+  "valid": true
+  }''')
 
 
 def prep_query(query_object):

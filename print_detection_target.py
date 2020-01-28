@@ -1,4 +1,5 @@
 from __future__ import print_function
+
 import base64
 import datetime
 import json
@@ -6,6 +7,7 @@ import logging
 import logging.handlers
 import os
 from pathlib import Path
+import pprint
 import sys
 
 import randori_api
@@ -23,13 +25,6 @@ logger = logging.getLogger(__name__)
 
 logger.setLevel(logging.DEBUG)
 
-syslog_server = ''
-
-if syslog_server:
-    syslog_handler = logging.handlers.SysLogHandler(address=(syslog_server, 
-                                                             514))
-    logger.addHandler(syslog_handler)
-
 alerts_log = ''
 
 if alerts_log:
@@ -39,7 +34,7 @@ if alerts_log:
 
 log_to_console = True
 
-if not (alerts_log or syslog_server) or log_to_console:
+if not alerts_log or log_to_console:
     console_handler = logging.StreamHandler()
     logger.addHandler(console_handler)
 
@@ -55,16 +50,6 @@ initial_query = json.loads('''{
       "field": "table.confidence",
       "operator": "greater_or_equal",
       "value": 60
-    },
-    {
-      "condition": "AND",
-      "rules": [
-        {
-          "field": "table.hostname",
-          "operator": "not_contains",
-          "value": "randori.com"
-        }
-      ]
     }
   ],
   "valid": true
@@ -92,25 +77,11 @@ def tt_to_string(tt):
     else:
         return 'Low'
 
-##########
-# Sample JSON returned by get_hostname
-##########
-'''
-{'confidence': 75,
- 'deleted': False,
- 'first_seen': datetime.datetime(2019, 9, 13, 20, 18, 45, 334601, tzinfo=tzutc()),
- 'hostname': 'www.webernets.online',
- 'id': 'bc6a641f-eef5-444f-9311-1d43da55638c',
- 'ip_count': 15,
- 'last_seen': datetime.datetime(2019, 10, 7, 12, 25, 56, 107949, tzinfo=tzutc()),
- 'max_confidence': 75,
- 'name_type': 1,
- 'org_id': '71803330-934a-4c4d-bd82-af1ba5e73ae8',
- 'tags': {},
- 'target_temptation': 22}
- '''
 
-def iterate_hostnames():
+def iterate_detection_targets():
+
+    pp = pprint.PrettyPrinter(indent=4)
+
     more_targets_data= True
     offset = 0
     limit = 200
@@ -121,7 +92,7 @@ def iterate_hostnames():
         query = prep_query(initial_query)
 
         try:
-            resp = r_api.get_hostname(offset=offset, limit=limit,
+            resp = r_api.get_detection_target(offset=offset, limit=limit,
                                     sort=sort, q=query)
         except ApiException as e:
             print("Exception in RandoriApi->get_target: %s\n" % e)
@@ -134,12 +105,13 @@ def iterate_hostnames():
         else:
             offset = max_records
 
-        for hostname in resp.data:
-            #print(hostname)
-            print(hostname.hostname, hostname.confidence)
+        for detection_target in resp.data:
+            print(detection_target)
+            print()
+            #pp_detection_target = json.loads(detection_target, indent=2, sort_keys=True)
                 
 
 
 if __name__ == '__main__':
-    iterate_hostnames()
+    iterate_detection_targets()
     
