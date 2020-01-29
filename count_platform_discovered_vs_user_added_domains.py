@@ -24,7 +24,7 @@ r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 #Initial Query:
 #    Confidence Greater Than or Equal To Medium
 #    and
-#    Target Temptation Greater Than or Equal To High
+#    Name Type Equal 0 (i.e. domains instead of hosts)
 initial_query = json.loads('''{
   "condition": "AND",
   "rules": [
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     optional.add_argument("-u", "--user_added", default=False, action="store_true",
         help="If the user arg/flag is provided, print user provided domains to std out.")
     optional.add_argument("-p", "--platform_discovered", default=False, action="store_true",
-        help="If the discovered arg/flag is provided, print platform discovered domains to std out.")
+        help="If the platform discovered arg/flag is provided, print platform discovered domains to std out.")
     parser._action_groups.append(optional)
 
     args = parser.parse_args()
@@ -143,13 +143,6 @@ if __name__ == '__main__':
 
     if args.platform_discovered:
         print("Platform Discovered Domains: %s" % discovered_domains)
-    '''
-    if args.output:
-        with open(args.output, 'w+') as outfile:
-            for dom in discovered_domains:
-                outfile.write(dom)
-                outfile.write('\n')
-     '''
     
     sys.stderr.write("\nCount of Discovered Domains: %s\n" % str(len(discovered_domains)))
 
