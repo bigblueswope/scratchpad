@@ -1,9 +1,6 @@
 import base64
-import http.client
 import json
 import os
-import socket
-import ssl
 import sys
 
 
@@ -38,23 +35,6 @@ def prep_query(query_object):
    query = base64.b64encode(iq)
    return query
 
-
-###
-#Sample output of get_ports_for_ip
-###
-'''{
-   'confidence': 75,
-   'deleted': False,
-   'id': '56fb7d79-fe1d-4b0a-89d8-4f2c27eec6d4',
-   'ip_id': 'b4f16be0-2bc6-44da-92b8-a9cbd0b05e34',
-   'last_seen': datetime.datetime(2019, 12, 12, 3, 14, 13, 278251, tzinfo=tzutc()),
-   'max_confidence': 75,
-   'org_id': '89623ad5-6051-444f-aff4-529f7e7e2e70',
-   'port': 8443,
-   'protocol': 6,
-   'seen_open': True,
-   'state': 'open'
-}'''
 
 
 ports_for_ip_query = json.loads('''{
@@ -97,22 +77,6 @@ def get_ports_for_ip(ip_id):
 
 
 
-##########
-# Sample output of by get_hostnames_for_ip
-##########
-'''
-{'confidence': 75,
- 'deleted': False,
- 'hostname': 'www.kesslerwoundcare.com',
- 'hostname_id': '2c985a29-7585-4041-a1f0-667065784952',
- 'hostname_tags': {},
- 'id': '2c985a29-7585-4041-a1f0-667065784952,b50db97e-6841-4d06-a2e6-31fcc28a9170',
- 'ip_id': 'b50db97e-6841-4d06-a2e6-31fcc28a9170',
- 'last_seen': datetime.datetime(2019, 12, 14, 11, 52, 42, 953908, tzinfo=tzutc()),
- 'max_confidence': 75,
- 'org_id': '89623ad5-6051-444f-aff4-529f7e7e2e70'}
- '''
-
 ge_medium_conf_hosts = json.loads('''{
   "condition": "AND",
   "rules": [
@@ -140,10 +104,10 @@ def iterate_hostnames():
         query = prep_query(ge_medium_conf_hosts)
 
         try:
-            resp = r_api.get_hostnames_for_ip(offset=offset, limit=limit,
+            resp = r_api.get_hostname(offset=offset, limit=limit,
                                     sort=sort, q=query)
         except ApiException as e:
-            print("Exception in RandoriApi->get_hostnames_for_ip: %s\n" % e)
+            print("Exception in RandoriApi->get_hostname: %s\n" % e)
             sys.exit(1)
 
         max_records = offset + limit

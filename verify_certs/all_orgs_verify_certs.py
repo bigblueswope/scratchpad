@@ -1,3 +1,4 @@
+from copy import copy
 import base64
 import http.client
 import json
@@ -12,18 +13,13 @@ from randori_api.rest import ApiException
 
 configuration = randori_api.Configuration()
 
-# Normal scripts use the environment variable to set the API Key
-#  because they only look at data for one Org
-#  but this script will iterate over all API Keys
-#  and replace this value for each one of them
-#  because it is generating stats for ALL Orgs
 configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
 r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 
-class platform_host:
+class cert_host:
     def __init__(self, hostname_id, org_id, hostname, ip_id):
         self.hostname_id = hostname_id
         self.org_id = org_id
@@ -31,6 +27,43 @@ class platform_host:
         self.ip_id = ip_id
         self.port = ''
         self.cert_status = ''
+        self.url = ''
+
+
+def check_cert(hostname, port):
+    connection = http.client.HTTPSConnection(hostname, port, timeout=10)
+
+    try:
+        connection.request("GET", "/")
+        response = connection.getresponse()
+        cert_status = ''
+        connection.close()
+    except ssl.SSLCertVerificationError as e:
+        if e.verify_code == 10:
+            cert_status = 'Expired Cert'
+        elif e.verify_code == 62:
+            cert_status = 'Cert to Host Name Mismatch'
+        elif e.verify_code == 18:
+            cert_status = 'Self-Signed Cert'
+        elif e.verify_code == 19:
+            cert_status = 'Self-Signed CA'
+        elif e.verify_code == 20:
+            cert_status = ''
+        else:
+            print('Unknown SSL Cert Verification Error')
+            print('Verification error code {}'.format(e.verify_code))
+            print(e.verify_message)
+    except (socket.timeout, socket.gaierror, ssl.SSLError, ConnectionResetError):
+        cert_status = ''
+    except http.client.BadStatusLine:
+        cert_status = ''
+    except ConnectionRefusedError:
+        cert_status = ''
+    finally:
+        connection.close()
+
+    return cert_status
+
 
 
 def prep_query(query_object):
@@ -38,23 +71,6 @@ def prep_query(query_object):
    query = base64.b64encode(iq)
    return query
 
-
-###
-#Sample output of get_ports_for_ip
-###
-'''{
-   'confidence': 75,
-   'deleted': False,
-   'id': '56fb7d79-fe1d-4b0a-89d8-4f2c27eec6d4',
-   'ip_id': 'b4f16be0-2bc6-44da-92b8-a9cbd0b05e34',
-   'last_seen': datetime.datetime(2019, 12, 12, 3, 14, 13, 278251, tzinfo=tzutc()),
-   'max_confidence': 75,
-   'org_id': '89623ad5-6051-444f-aff4-529f7e7e2e70',
-   'port': 8443,
-   'protocol': 6,
-   'seen_open': True,
-   'state': 'open'
-}'''
 
 
 ports_for_ip_query = json.loads('''{
@@ -97,23 +113,7 @@ def get_ports_for_ip(ip_id):
 
 
 
-##########
-# Sample output of by get_hostnames_for_ip
-##########
-'''
-{'confidence': 75,
- 'deleted': False,
- 'hostname': 'www.kesslerwoundcare.com',
- 'hostname_id': '2c985a29-7585-4041-a1f0-667065784952',
- 'hostname_tags': {},
- 'id': '2c985a29-7585-4041-a1f0-667065784952,b50db97e-6841-4d06-a2e6-31fcc28a9170',
- 'ip_id': 'b50db97e-6841-4d06-a2e6-31fcc28a9170',
- 'last_seen': datetime.datetime(2019, 12, 14, 11, 52, 42, 953908, tzinfo=tzutc()),
- 'max_confidence': 75,
- 'org_id': '89623ad5-6051-444f-aff4-529f7e7e2e70'}
- '''
-
-ge_medium_conf_hosts = json.loads('''{
+initial_query = json.loads('''{
   "condition": "AND",
   "rules": [
     {
@@ -127,9 +127,9 @@ ge_medium_conf_hosts = json.loads('''{
 ''')
 
 def iterate_hostnames():
-
-    platform_hosts = []
-    
+    # preloading hostnames with connect.ushworks.com because it crashes the script
+    hostnames = ['connect.ushworks.com']
+    cert_hosts = []
     more_targets_data= True
     offset = 0
     limit = 200
@@ -137,7 +137,7 @@ def iterate_hostnames():
 
     while more_targets_data:
         
-        query = prep_query(ge_medium_conf_hosts)
+        query = prep_query(initial_query)
 
         try:
             resp = r_api.get_hostnames_for_ip(offset=offset, limit=limit,
@@ -154,30 +154,24 @@ def iterate_hostnames():
             offset = max_records
 
         for h in resp.data:
-            platform_hosts.append(platform_host(h.hostname_id, h.org_id, h.hostname, h.ip_id))
+            if h.hostname in hostnames:
+                continue
+            else:
+                hostnames.append(h.hostname)
+                cert_hosts.append(cert_host(h.hostname_id, h.org_id, h.hostname, h.ip_id))
         
-    return platform_hosts
+    return cert_hosts
 
 
 
-def default_function():
-    # 2020-01-29:
-    # TODO: Looking at this code today it appears that this is a copy
-    #   of the script I wrote to look for expired certificates that 
-    #   I copied, intending to repurpose to a tool to generate
-    #   statistics around IPs and Ports.  But I haven't changed the 
-    #   functions to do that, so the name of this file and the code
-    #   in the file do not match.  Just going to print something and
-    #   exit here.
-
-    print("This is not the script you're looking for.  Read the TODO in the source...")
-    sys.exit(0)
+def cert_verification():
+    broken_cert_hosts= []
     
-    hosts = iterate_hostnames()
+    cert_hosts = iterate_hostnames()
     
 
-    for host in hosts:
-        org_id = host.org_id
+    for cert_host in cert_hosts:
+        org_id = cert_host.org_id
         
         outfile = org_id + ".json"
         
@@ -185,14 +179,31 @@ def default_function():
             print('OrgID Exists: {}'.format(org_id))
             return
 
-        ports = get_ports_for_ip(host.ip_id)
+        ports = get_ports_for_ip(cert_host.ip_id)
         
         for port in ports:
+            cert_status = ''
 
-            cert_host.port = port
-            
-            cert_host.cert_status = cert_status
-            
+            # ports known to not have certs and just slow down the scanner
+            if port in [21, 22, 25, 53, 80, 139, 445, 2082, 3389, 8080]:
+                continue
+
+            print('Checking {} {}'.format(cert_host.hostname, port))
+
+            cert_status = check_cert(cert_host.hostname, port)
+
+            if cert_status:
+                
+                cert_host.port = port
+                
+                cert_host.cert_status = cert_status
+
+                cert_host.url = ''.join( ['https://', cert_host.hostname, ':', str(cert_host.port)] )
+                
+                print(cert_host.org_id, cert_host.hostname_id, cert_host.hostname, cert_host.ip_id, cert_host.url, cert_status)
+                
+                broken_cert_hosts.append(copy(cert_host.__dict__))
+
     
     if not (os.path.isfile(outfile)):
         with open(outfile, 'w') as f:
@@ -212,4 +223,4 @@ if __name__ == '__main__':
                 token = line.rstrip('\n').rstrip(',')
 
         configuration.access_token = token
-        default_function()
+        cert_verification()

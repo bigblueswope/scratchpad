@@ -222,7 +222,7 @@ if __name__ == '__main__':
             do_work_for_org(item)
             q1.task_done()
     
-    # Use many threads (20 max, or one for each url)
+    # Use many threads (20 max, or one for each token)
     num_worker_threads = min(20, len(tokens))
     
     for i in range(num_worker_threads):

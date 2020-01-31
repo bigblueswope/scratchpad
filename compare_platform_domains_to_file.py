@@ -1,12 +1,8 @@
-#from __future__ import print_function
 import argparse
 import base64
 import datetime
 import json
-import logging
-import logging.handlers
 import os
-from pathlib import Path
 import sys
 import socket
 
@@ -30,9 +26,7 @@ r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 
 
 #Initial Query:
-#    Confidence Greater Than or Equal To Medium
-#    and
-#    Target Temptation Greater Than or Equal To High
+#    Confidence Greater Than or Equal To 0
 initial_query = json.loads('''{
   "condition": "AND",
   "rules": [
@@ -57,25 +51,6 @@ def prep_query(query_object):
    return query
 
 
-
-##########
-# Sample JSON returned by get_hostname
-##########
-'''
-{'confidence': 75,
- 'deleted': False,
- 'first_seen': datetime.datetime(2019, 9, 13, 20, 18, 45, 334601, tzinfo=tzutc()),
- 'hostname': 'www.webernets.online',
- 'id': 'bc6a641f-eef5-444f-9311-1d43da55638c',
- 'ip_count': 15,
- 'last_seen': datetime.datetime(2019, 10, 7, 12, 25, 56, 107949, tzinfo=tzutc()),
- 'max_confidence': 75,
- 'name_type': 1,
- 'org_id': '71803330-934a-4c4d-bd82-af1ba5e73ae8',
- 'tags': {},
- 'target_temptation': 22}
- '''
-
 def resolve_hostnames(hostname):
     try:
         ip = socket.gethostbyname(hostname)
@@ -85,6 +60,42 @@ def resolve_hostnames(hostname):
             return False
     except socket.gaierror:
         return False
+
+
+
+def get_platform_ips():
+    platform_ips = {}
+
+    more_data= True
+    offset = 0
+    limit = 200
+    sort = ['ip']
+
+    while more_data:
+
+        query = prep_query(initial_query)
+
+        try:
+            resp = r_api.get_ip(offset=offset, limit=limit,
+                                    sort=sort, q=query)
+        except ApiException as e:
+            print("Exception in RandoriApi->get_hostname: %s\n" % e)
+            sys.exit(1)
+
+        max_records = offset + limit
+
+        if resp.total <= max_records:
+            more_data = False
+        else:
+            offset = max_records
+
+        for item in resp.data:
+            if not item.ip in platform_ips.keys():
+                platform_ips[item.ip] = item.confidence
+
+    return platform_ips
+
+
 
 def get_platform_domains():
     
@@ -113,11 +124,14 @@ def get_platform_domains():
         else:
             offset = max_records
 
-        for host in resp.data:
-            if not host.hostname in platform_domains.keys():
-                platform_domains[host.hostname] = host.confidence
+        for item in resp.data:
+            if not item.hostname in platform_domains.keys():
+                platform_domains[item.hostname] = item.confidence
 
     return platform_domains
+
+
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Compare File With Domains to Existing Domains in Platform')
@@ -135,61 +149,145 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     platform_domains = get_platform_domains()
-
-    addl_domains = []
-    both_domains = {}
+    platform_ips = get_platform_ips()
     
-    sys.stderr.write("\n###################\nDomains from Input file:\n\n")
+    new_domains = {}
+    new_ips = {}
+    both_domains = {}
+    both_ips = {}
 
+    non_resolving_domains = []
+    addl_domains = []
+    
+    count_of_input_items = 0
+    count_of_unique_input_items_not_in_platform = 0
+    new_dom_count = 0
+    non_resolving_dom_count = 0
+    hosts_wo_ips_in_platform = 0
+
+    
     with open(args.input, 'r+') as f:
         for line in f:
-            # new_domain = line from file
             new_domain = line.rstrip('\n').rstrip(',')
+
             if new_domain == 'domainName':
                 continue
+            
+            count_of_input_items += 1
+            # host/domain does not exist in the Platform and is not a 
+            #   duplicate in the input file
+            if not new_domain in (platform_domains.keys() or addl_domains):
+                
+                count_of_unique_input_items_not_in_platform += 1
 
-            sys.stderr.write("%s\n" % new_domain)
-
-            if not new_domain in platform_domains.keys():
                 # append domain/host from file to list of domains to add to the platform
+                #   so we can check for dupliates as we iterate over the file
                 addl_domains.append(new_domain)
+
+                ip = resolve_hostnames(new_domain)
+
+                if ip:
+                    try:
+                        # The host/domain resolved to an IP we already know about
+                        # No need to add that host/domain because we have a host/domain
+                        # that will get us to the IP.  Just increment the counter
+                        new_ips[ip] +=1
+                    
+                    except KeyError:
+                        # The IP for the host/domain is not in platform and
+                        #   the IP has not resolved for any new hosts/domains
+                        #   So add it to the new_ips dict
+                        new_ips[ip] = 1
+
+                        # Also add it to the new hosts/domains dict
+                        new_domains[new_domain] = ip
+
+                        # increment the count of hosts/domains we will be
+                        #   adding to the platform
+                        new_dom_count += 1
+                else:
+                    # The host/domain did not resolve to an IP so add it
+                    #   to the list of hosts/domains that do not resolve
+                    non_resolving_domains.append(new_domain)
+
+                    # Increment the count of non-resolving hosts/domains
+                    non_resolving_dom_count += 1
+                    
             else:
                 # domain/host is already in the platform so create an entry in 
                 #   the existing domain dictionary with a value of the Confidence
-                both_domains[new_domain] = platform_domains[new_domain]
+                try:
+                    both_domains[new_domain] = platform_domains[new_domain]
+                except KeyError:
+                    # new_domain is a duplicate in the input file
+                    #   not an existing Platform host/domain
+                    #   so we don't add it to the list of "in both places"
+                    pass
     
     sys.stderr.write("\n###################\nDomains To Be Added:\n\n")
 
-    new_dom_count = 0
-    non_resolving_dom_count = 0
+
+    # TODO: If we are looking up only domains, we don't care about resolution
+    #   so add a "domain" flag to skip resolution logic.
 
     # uses print here which writes to stdout which can be piped to another program
-    for dom in addl_domains:
-        ip = resolve_hostnames(dom)
-        if ip:
-            new_dom_count += 1
-            if args.resolution:
-                if args.name_first:
-                    print(dom, ip)
-                else:
-                    print(ip, dom)
+
+    for dom,dom_ip in new_domains.items():
+        try:
+            # if confidence of ip in platform is greater than specified integer
+            if platform_ips[dom_ip] >= 60:
+                # we do not need to add the host/domain name to the platform
+                #  so add an entry to the both_ips dict
+                both_ips[dom_ip] = platform_ips[dom_ip]
+                #because we already know about the IP iterate to next item
+                continue
+        except KeyError:
+            # The IP of the host/domain is not in the platform
+            #   so continue with this iteration
+            pass
+        
+        # count of host/domain names that resolve but the IP 
+        #    is not in the platform
+        hosts_wo_ips_in_platform += 1
+
+        # If we want to see the IP of the host/domain in the output
+        if args.resolution:
+            # If we want to see the host/domain before the IP 
+            if args.name_first:
+                print(dom, dom_ip)
             else:
-                print(dom)
+                print(dom_ip, dom)
         else:
-            non_resolving_dom_count += 1
+            print(dom)
     
+
     # will write the domains to be added to an outfile
     if args.output:
         with open(args.output, 'w+') as outfile:
-            for dom in addl_domains:
-                outfile.write(dom)
-                outfile.write('\n')
+            for dom,dom_ip in new_domains.items():
+                if args.resolution:
+                    if args.name_first:
+                        outfile.write("%s %s\n" % (dom,dom_ip))
+                    else:
+                        outfile.write("%s %s\n" % (dom_ip,dom))
+                else:
+                        outfile.write("%s\n" % (dom))
             
-    sys.stderr.write("\nCount of Non-Resolving Domains not in Platform: %s\n" % str(non_resolving_dom_count))
+    sys.stderr.write("\nCount of items in input file: %s\n" % str(count_of_input_items))
+    
+    sys.stderr.write("\nCount of unique items in input file and not in platform: %s\n" % str(count_of_unique_input_items_not_in_platform))
+    
+    sys.stderr.write("\nCount of domains in Platform and input file: %s\n" % str(len(both_domains)))
 
-    sys.stderr.write("\nCount of Domains that need to be added: %s\n" % str(new_dom_count))
+    sys.stderr.write("\nCount of items in input file with unique IPs: %s\n" % str(new_dom_count))
+    
+    sys.stderr.write("\nCount of hosts/domains that do not have IPs in Platform: %s\n" % str(hosts_wo_ips_in_platform))
 
-    sys.stderr.write("\nCount of Domains in Platform and Input file: %s\n" % str(len(both_domains)))
+    sys.stderr.write("\nCount of non-resolving hosts/domains not in Platform: %s\n" % str(non_resolving_dom_count))
 
-    sys.stderr.write("\nDomains and their Confidence in both Platform and Input file: %s\n" % both_domains)
+    sys.stderr.write("\nList of non-resolving hosts/domains not in Platform: %s\n" % str(non_resolving_domains))
+
+    sys.stderr.write("\nItems and their confidence in both Platform and input file: %s\n" % both_domains)
+
+    sys.stderr.write("\nIPs and their confidence in both Platform and input file: %s\n" % both_ips)
     

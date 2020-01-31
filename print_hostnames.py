@@ -117,7 +117,7 @@ def iterate_hostnames():
             resp = r_api.get_hostname(offset=offset, limit=limit,
                                     sort=sort, q=query)
         except ApiException as e:
-            print("Exception in RandoriApi->get_target: %s\n" % e)
+            print("Exception in RandoriApi->get_hostname: %s\n" % e)
             sys.exit(1)
 
         max_records = offset + limit

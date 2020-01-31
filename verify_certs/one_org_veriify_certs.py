@@ -1,4 +1,3 @@
-from __future__ import print_function
 from copy import copy
 import base64
 import http.client
@@ -14,7 +13,8 @@ from randori_api.rest import ApiException
 
 configuration = randori_api.Configuration()
 
-configuration.access_token = os.getenv("RANDORI_API_KEY");
+#this is replaced by the token specified as an argument to the script
+#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
@@ -28,6 +28,9 @@ class cert_host:
         self.ip_id = ip_id
         self.port = ''
         self.cert_status = ''
+        self.url = ''
+        self.platform_host_url = ''
+        self.platform_ip_url = ''
 
 
 def check_cert(hostname, port):
@@ -72,23 +75,6 @@ def prep_query(query_object):
    return query
 
 
-###
-#Sample output of get_ports_for_ip
-###
-'''{
-   'confidence': 75,
-   'deleted': False,
-   'id': '56fb7d79-fe1d-4b0a-89d8-4f2c27eec6d4',
-   'ip_id': 'b4f16be0-2bc6-44da-92b8-a9cbd0b05e34',
-   'last_seen': datetime.datetime(2019, 12, 12, 3, 14, 13, 278251, tzinfo=tzutc()),
-   'max_confidence': 75,
-   'org_id': '89623ad5-6051-444f-aff4-529f7e7e2e70',
-   'port': 8443,
-   'protocol': 6,
-   'seen_open': True,
-   'state': 'open'
-}'''
-
 
 ports_for_ip_query = json.loads('''{
   "condition": "AND",
@@ -129,22 +115,6 @@ def get_ports_for_ip(ip_id):
     return open_ports
 
 
-
-##########
-# Sample output of by get_hostnames_for_ip
-##########
-'''
-{'confidence': 75,
- 'deleted': False,
- 'hostname': 'www.kesslerwoundcare.com',
- 'hostname_id': '2c985a29-7585-4041-a1f0-667065784952',
- 'hostname_tags': {},
- 'id': '2c985a29-7585-4041-a1f0-667065784952,b50db97e-6841-4d06-a2e6-31fcc28a9170',
- 'ip_id': 'b50db97e-6841-4d06-a2e6-31fcc28a9170',
- 'last_seen': datetime.datetime(2019, 12, 14, 11, 52, 42, 953908, tzinfo=tzutc()),
- 'max_confidence': 75,
- 'org_id': '89623ad5-6051-444f-aff4-529f7e7e2e70'}
- '''
 
 initial_query = json.loads('''{
   "condition": "AND",
@@ -230,8 +200,14 @@ def cert_verification():
                 cert_host.port = port
                 
                 cert_host.cert_status = cert_status
+
+                cert_host.url = ''.join( ['https://', cert_host.hostname, ':', str(cert_host.port)] )
+
+                cert_host.platform_host_url = ''.join( ['https://alpha.randori.io/hostnames/', str(cert_host.hostname_id) ] )
                 
-                print(cert_host.org_id, cert_host.hostname_id, cert_host.hostname, cert_host.ip_id, cert_status)
+                cert_host.platform_ip_url = ''.join( ['https://alpha.randori.io/ips/', str(cert_host.ip_id) ] )
+                
+                print(cert_host.org_id, cert_host.platform_host_url, cert_host.hostname, cert_host.platform_ip_url, cert_host.url, cert_status)
                 
                 broken_cert_hosts.append(copy(cert_host.__dict__))
 
@@ -246,7 +222,14 @@ def cert_verification():
 if __name__ == '__main__':
     path = '/Users/bj/.tokens/'
 
-    for filename in os.listdir(path):
+    try:
+        sys.argv[1]
+        pass
+    except IndexError:
+        print("Script requires 1 arugment, the file name for the file containing the API key.")
+        sys.exit(1)
+
+    for filename in [ sys.argv[1] ]:
         print('Processing {}'.format(filename))
 
         with open((path + filename), 'r+') as f:
@@ -255,3 +238,5 @@ if __name__ == '__main__':
 
         configuration.access_token = token
         cert_verification()
+
+
