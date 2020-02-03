@@ -3,9 +3,6 @@ import os
 import argparse
 import ipaddress
 import sys
-import json
-import csv
-import requests
 
 import tldextract
 
@@ -34,7 +31,6 @@ def refresh_tld_set():
     
     if int(tld_set_date) < int(sda):
         os.remove(tld_set_file)
-        #print('%s age older than 7 days. Refreshing' % tld_set_file)
 
 
 def detect_entities(src_file):
@@ -95,8 +91,6 @@ def detect_entities(src_file):
             #   tldextract is smart enough to treat it properly
             if ext.subdomain and ext.suffix:
                 # Finds FQDNs
-        
-                #print ("Host:", res)
                 hosts.append(res)
                 continue
         
@@ -104,10 +98,9 @@ def detect_entities(src_file):
             #   so verify that we got a domain portion and it isn't just a TLD
             elif ext.domain and ext.suffix:
                 # Finds Domains
-                
-                #print ("Domain:", res)
                 domains.append(res)
                 continue
+
             # the line was not a domain nor a FQDN
             else:
                 o = urlparse(i)[1]
@@ -129,13 +122,9 @@ def detect_entities(src_file):
                         or i.is_multicast
                         or i.is_link_local ):
                     
-                        #print("Reserved IP Address:", str(i))
                         reserved_ips.append(str(i))
                         continue
                     
-                    #i = str(i)
-
-                    #print("IP:", str(i))
                     ips.append(str(i))
                     continue
                     
@@ -145,7 +134,6 @@ def detect_entities(src_file):
                 try:
                     ipaddress.ip_network(i)
                 
-                    #print("IP Network:", i)
                     networks.append(i)
                     continue
 
@@ -154,7 +142,6 @@ def detect_entities(src_file):
 
             #########################
             # String provided does no match an entity we support
-            #print("No Match:", i)
             unsupported.append(i)
             continue
             
@@ -169,7 +156,7 @@ def detect_entities(src_file):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description = 
-        "Script to separate hostnames, domains and IPs from a file.")
+        "Script to separate hostnames, domains, IPs, and Networks from a file.")
     required = parser.add_argument_group('required arguments')
     required.add_argument("-i", "--input", required=True, help="File containing entities to separate.")
 

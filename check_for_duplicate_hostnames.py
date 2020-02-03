@@ -12,7 +12,7 @@ from randori_api.rest import ApiException
 
 configuration = randori_api.Configuration()
 
-configuration.access_token = os.getenv("RANDORI_API_KEY");
+configuration.access_token = os.getenv("RANDORI_API_KEY")
 
 configuration.host = "https://alpha.randori.io"
 

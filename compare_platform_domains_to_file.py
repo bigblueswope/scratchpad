@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
             # host/domain does not exist in the Platform and is not a 
             #   duplicate in the input file
-            if not new_domain in (platform_domains.keys() or addl_domains):
+            if not new_domain in platform_domains.keys() and not new_domain in addl_domains:
                 
                 count_of_unique_input_items_not_in_platform += 1
 

@@ -45,7 +45,7 @@ def check_cert(hostname, port):
         if e.verify_code == 10:
             cert_status = 'Expired Cert'
         elif e.verify_code == 62:
-            cert_status = 'Cert to Host Name Mismatch'
+            cert_status = 'Cert Name Mismatch'
         elif e.verify_code == 18:
             cert_status = 'Self-Signed Cert'
         elif e.verify_code == 19:
@@ -172,16 +172,20 @@ def cert_verification():
     
     cert_hosts = iterate_hostnames()
     
+    first_host = cert_hosts[0]
+
+    org_id = first_host.org_id
+    
+    outfile = org_id + ".json"
+    
+    if (os.path.isfile(outfile)):
+        print('Out file for OrgID Exists: {}'.format(org_id))
+        print("Exiting script.  Move or remove %s and rerun the script" % outfile)
+        return
+
 
     for cert_host in cert_hosts:
-        org_id = cert_host.org_id
         
-        outfile = org_id + ".json"
-        
-        if (os.path.isfile(outfile)):
-            print('OrgID Exists: {}'.format(org_id))
-            return
-
         ports = get_ports_for_ip(cert_host.ip_id)
         
         for port in ports:

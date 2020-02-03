@@ -9,6 +9,8 @@ import socket
 import randori_api
 from randori_api.rest import ApiException
 
+from threaded_name_resolution import resolve_list_of_hostnames
+
 #Note:
 #  Instead of print statements, much of the output uses
 #  sys.stderr.write
@@ -156,7 +158,6 @@ if __name__ == '__main__':
     both_domains = {}
     both_ips = {}
 
-    non_resolving_domains = []
     addl_domains = []
     
     count_of_input_items = 0
@@ -168,69 +169,61 @@ if __name__ == '__main__':
     
     with open(args.input, 'r+') as f:
         for line in f:
-            new_domain = line.rstrip('\n').rstrip(',')
+            new_hostname = line.rstrip('\n').rstrip(',')
 
-            if new_domain == 'domainName':
+            if new_hostname == 'domainName':
                 continue
             
             count_of_input_items += 1
+
             # host/domain does not exist in the Platform and is not a 
             #   duplicate in the input file
-            if not new_domain in (platform_domains.keys() or addl_domains):
+            if not new_hostname in platform_domains.keys() and not new_hostname in addl_domains:
                 
                 count_of_unique_input_items_not_in_platform += 1
 
                 # append domain/host from file to list of domains to add to the platform
                 #   so we can check for dupliates as we iterate over the file
-                addl_domains.append(new_domain)
-
-                ip = resolve_hostnames(new_domain)
-
-                if ip:
-                    try:
-                        # The host/domain resolved to an IP we already know about
-                        # No need to add that host/domain because we have a host/domain
-                        # that will get us to the IP.  Just increment the counter
-                        new_ips[ip] +=1
-                    
-                    except KeyError:
-                        # The IP for the host/domain is not in platform and
-                        #   the IP has not resolved for any new hosts/domains
-                        #   So add it to the new_ips dict
-                        new_ips[ip] = 1
-
-                        # Also add it to the new hosts/domains dict
-                        new_domains[new_domain] = ip
-
-                        # increment the count of hosts/domains we will be
-                        #   adding to the platform
-                        new_dom_count += 1
-                else:
-                    # The host/domain did not resolve to an IP so add it
-                    #   to the list of hosts/domains that do not resolve
-                    non_resolving_domains.append(new_domain)
-
-                    # Increment the count of non-resolving hosts/domains
-                    non_resolving_dom_count += 1
-                    
+                addl_domains.append(new_hostname)
+            
             else:
                 # domain/host is already in the platform so create an entry in 
                 #   the existing domain dictionary with a value of the Confidence
                 try:
-                    both_domains[new_domain] = platform_domains[new_domain]
+                    both_domains[new_hostname] = platform_domains[new_hostname]
                 except KeyError:
                     # new_domain is a duplicate in the input file
                     #   not an existing Platform host/domain
                     #   so we don't add it to the list of "in both places"
-                    pass
+                    continue
     
+
+    for hn, ip in resolve_list_of_hostnames(addl_domains):
+        
+        if ip:
+            try:
+                # The host/domain resolved to an IP we already know about
+                # No need to add that host/domain because we have a host/domain
+                # that will get us to the IP.  Just increment the counter
+                new_ips[ip] +=1
+            
+            except KeyError:
+                # The IP for the host/domain is not in platform and
+                #   the IP has not resolved for any new hosts/domains
+                #   So add it to the new_ips dict
+                new_ips[ip] = 1
+                
+                # Also add it to the new hosts/domains dict
+                new_domains[hn] = ip
+                
+                # increment the count of hosts/domains we will be
+                #   adding to the platform
+                new_dom_count += 1
+        else:
+            # Increment the count of non-resolving hosts/domains
+            non_resolving_dom_count += 1
+                    
     sys.stderr.write("\n###################\nDomains To Be Added:\n\n")
-
-
-    # TODO: If we are looking up only domains, we don't care about resolution
-    #   so add a "domain" flag to skip resolution logic.
-
-    # uses print here which writes to stdout which can be piped to another program
 
     for dom,dom_ip in new_domains.items():
         try:
@@ -249,6 +242,8 @@ if __name__ == '__main__':
         # count of host/domain names that resolve but the IP 
         #    is not in the platform
         hosts_wo_ips_in_platform += 1
+
+        # uses print here which writes to stdout which can be piped to another program
 
         # If we want to see the IP of the host/domain in the output
         if args.resolution:
@@ -273,21 +268,19 @@ if __name__ == '__main__':
                 else:
                         outfile.write("%s\n" % (dom))
             
-    sys.stderr.write("\nCount of items in input file: %s\n" % str(count_of_input_items))
+    sys.stderr.write("\nCount of hostnames in input file: %s\n" % str(count_of_input_items))
     
-    sys.stderr.write("\nCount of unique items in input file and not in platform: %s\n" % str(count_of_unique_input_items_not_in_platform))
+    sys.stderr.write("\nCount of unique hostnames in input file and not in platform: %s\n" % str(count_of_unique_input_items_not_in_platform))
     
-    sys.stderr.write("\nCount of domains in Platform and input file: %s\n" % str(len(both_domains)))
+    sys.stderr.write("\nCount of hostnames in Platform and input file: %s\n" % str(len(both_domains)))
 
-    sys.stderr.write("\nCount of items in input file with unique IPs: %s\n" % str(new_dom_count))
+    sys.stderr.write("\nCount of hostnames in input file with unique IPs: %s\n" % str(new_dom_count))
     
-    sys.stderr.write("\nCount of hosts/domains that do not have IPs in Platform: %s\n" % str(hosts_wo_ips_in_platform))
+    sys.stderr.write("\nCount of hostnames that do not have IPs in Platform: %s\n" % str(hosts_wo_ips_in_platform))
 
-    sys.stderr.write("\nCount of non-resolving hosts/domains not in Platform: %s\n" % str(non_resolving_dom_count))
+    sys.stderr.write("\nCount of non-resolving hostsnames not in Platform: %s\n" % str(non_resolving_dom_count))
 
-    sys.stderr.write("\nList of non-resolving hosts/domains not in Platform: %s\n" % str(non_resolving_domains))
+    sys.stderr.write("\nHostnames and their Confidence in both Platform and input file: %s\n" % both_domains)
 
-    sys.stderr.write("\nItems and their confidence in both Platform and input file: %s\n" % both_domains)
-
-    sys.stderr.write("\nIPs and their confidence in both Platform and input file: %s\n" % both_ips)
+    sys.stderr.write("\nIPs and their Confidence in both Platform and input file: %s\n" % both_ips)
     

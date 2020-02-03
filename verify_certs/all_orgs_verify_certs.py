@@ -42,7 +42,7 @@ def check_cert(hostname, port):
         if e.verify_code == 10:
             cert_status = 'Expired Cert'
         elif e.verify_code == 62:
-            cert_status = 'Cert to Host Name Mismatch'
+            cert_status = 'Cert Name Mismatch'
         elif e.verify_code == 18:
             cert_status = 'Self-Signed Cert'
         elif e.verify_code == 19:
