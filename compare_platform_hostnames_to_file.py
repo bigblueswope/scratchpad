@@ -9,7 +9,7 @@ import socket
 import randori_api
 from randori_api.rest import ApiException
 
-from threaded_name_resolution import resolve_list_of_hostnames
+from libs.threaded_name_resolution import resolve_list_of_hostnames
 
 #Note:
 #  Instead of print statements, much of the output uses
@@ -276,7 +276,7 @@ if __name__ == '__main__':
 
     sys.stderr.write("\nCount of hostnames in input file with unique IPs: %s\n" % str(new_dom_count))
     
-    sys.stderr.write("\nCount of hostnames that do not have IPs in Platform: %s\n" % str(hosts_wo_ips_in_platform))
+    sys.stderr.write("\nCount of hostnames that do not have IPs in Platform and will be added to Platform: %s\n" % str(hosts_wo_ips_in_platform))
 
     sys.stderr.write("\nCount of non-resolving hostsnames not in Platform: %s\n" % str(non_resolving_dom_count))
 

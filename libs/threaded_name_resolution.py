@@ -11,7 +11,7 @@ from queue import Queue
 
 def resolve_list_of_hostnames(hostname_list):
 
-    num_host_threads = min(50, len(hostname_list))
+    num_host_threads = min(100, len(hostname_list))
 
     results = []
 

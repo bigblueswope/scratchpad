@@ -1,9 +1,7 @@
-from __future__ import print_function
+import argparse
 import base64
-import datetime
 import json
 import os
-from pathlib import Path
 import sys
 
 import randori_api
@@ -24,13 +22,13 @@ initial_query = json.loads('''{
   "condition": "AND",
   "rules": [
     {
-      "field": "table.confidence",
-      "operator": "greater_or_equal",
-      "value": 0
+      "field": "table.tags",
+      "operator": "has_key",
+      "value": ""
     }
   ],
   "valid": true
-  }''')
+}''')
 
 
 
@@ -44,11 +42,13 @@ def prep_query(query_object):
 
 
 
-def iterate_hostnames():
+def iterate_hostnames(tag_string):
     more_targets_data= True
     offset = 0
     limit = 200
     sort = ['hostname']
+
+    initial_query['rules'][0]['value'] = tag_string
 
     while more_targets_data:
         
@@ -68,12 +68,21 @@ def iterate_hostnames():
         else:
             offset = max_records
 
-        for hostname in resp.data:
-            #print(hostname)
-            print(hostname.hostname, hostname.confidence)
+        for item in resp.data:
+            #print(item)
+            print(item.tags[tag_string]['time_added'], '\t', item.hostname)
+            #print(item.hostname, "\t\t", item.tags[tag_string]['time_added'])
+            #print(item.hostname, item.confidence)
                 
 
 
 if __name__ == '__main__':
-    iterate_hostnames()
+    parser = argparse.ArgumentParser(description = 'Print Hostnames and Tag Details for hosts with the provided Tag')
+    required = parser.add_argument_group('required arguments')
+    required.add_argument("-t", "--tag", required=True, 
+        help="Tag for which to search.  If tag includes spaces, enclose the string in quotes")
+
+    args = parser.parse_args()
+
+    iterate_hostnames(args.tag)
     

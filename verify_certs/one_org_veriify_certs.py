@@ -13,19 +13,17 @@ from randori_api.rest import ApiException
 
 configuration = randori_api.Configuration()
 
-#this is replaced by the token specified as an argument to the script
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
-
 configuration.host = "https://alpha.randori.io"
 
 r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 
 class cert_host:
-    def __init__(self, hostname_id, org_id, hostname, ip_id):
+    def __init__(self, hostname_id, org_id, hostname):
+    #def __init__(self, hostname_id, org_id, hostname, ip_id):
         self.hostname_id = hostname_id
         self.org_id = org_id
         self.hostname = hostname
-        self.ip_id = ip_id
+        #self.ip_id = ip_id
         self.port = ''
         self.cert_status = ''
         self.url = ''
@@ -115,6 +113,44 @@ def get_ports_for_ip(ip_id):
     return open_ports
 
 
+host_id_to_ip_id_query = json.loads('''{
+  "condition": "AND",
+  "rules": [
+    {
+      "field": "table.hostname_id",
+      "operator": "equal",
+      "value": "foo"
+    }
+  ],
+  "valid": true
+}''')
+
+
+def get_ip_ids_for_hostname(hostname_id):
+    ip_ids = []
+
+    offset = 0
+    limit = 200
+    sort = ['hostname_id']
+
+    host_id_to_ip_id_query['rules'][0]['value'] = hostname_id
+
+    #print(host_id_to_ip_id_query)
+    
+    q = prep_query(host_id_to_ip_id_query)
+
+    try:
+         api_response = r_api.get_ips_for_hostname(offset=offset, limit=limit, sort=sort, q=q)
+         
+         for item in api_response.data:
+            ip_ids.append(item.ip_id)
+    
+    except ApiException as e:
+        print("Exception when calling RandoriApi -> get_ips_for_hostname: %s\n" % e)
+
+    return ip_ids
+
+
 
 initial_query = json.loads('''{
   "condition": "AND",
@@ -129,6 +165,45 @@ initial_query = json.loads('''{
 }
 ''')
 
+init_query_and_tags = json.loads('''{
+  "condition": "AND",
+  "rules": [
+    {
+      "field": "table.confidence",
+      "operator": "greater_or_equal",
+      "value": 60
+    },
+    {
+      "condition": "AND",
+      "rules": [
+        {
+          "field": "table.tags",
+          "operator": "not_has_key",
+          "value": "Self-Signed Cert"
+        },
+        {
+          "field": "table.tags",
+          "operator": "not_has_key",
+          "value": "Cert Name Mismatch"
+        },
+        {
+          "field": "table.tags",
+          "operator": "not_has_key",
+          "value": "Self-Signed CA"
+        },
+        {
+          "field": "table.tags",
+          "operator": "not_has_key",
+          "value": "Expired Cert"
+        }
+      ]
+    }
+  ],
+  "valid": true
+}''')
+
+
+
 def iterate_hostnames():
     # preloading hostnames with connect.ushworks.com because it crashes the script
     hostnames = ['connect.ushworks.com']
@@ -140,13 +215,14 @@ def iterate_hostnames():
 
     while more_targets_data:
         
-        query = prep_query(initial_query)
+        query = prep_query(init_query_and_tags)
+        #query = prep_query(initial_query)
 
         try:
-            resp = r_api.get_hostnames_for_ip(offset=offset, limit=limit,
+            resp = r_api.get_hostname(offset=offset, limit=limit,
                                     sort=sort, q=query)
         except ApiException as e:
-            print("Exception in RandoriApi->get_hostnames_for_ip: %s\n" % e)
+            print("Exception in RandoriApi->get_hostname: %s\n" % e)
             sys.exit(1)
 
         max_records = offset + limit
@@ -160,8 +236,11 @@ def iterate_hostnames():
             if h.hostname in hostnames:
                 continue
             else:
+                #print(h)
+                #print(h.hostname)
                 hostnames.append(h.hostname)
-                cert_hosts.append(cert_host(h.hostname_id, h.org_id, h.hostname, h.ip_id))
+                cert_hosts.append(cert_host(h.id, h.org_id, h.hostname))
+                #cert_hosts.append(cert_host(h.hostname_id, h.org_id, h.hostname, h.ip_id))
         
     return cert_hosts
 
@@ -172,9 +251,7 @@ def cert_verification():
     
     cert_hosts = iterate_hostnames()
     
-    first_host = cert_hosts[0]
-
-    org_id = first_host.org_id
+    org_id = cert_hosts[0].org_id
     
     outfile = org_id + ".json"
     
@@ -186,34 +263,38 @@ def cert_verification():
 
     for cert_host in cert_hosts:
         
-        ports = get_ports_for_ip(cert_host.ip_id)
-        
-        for port in ports:
-            cert_status = ''
+        ip_ids = get_ip_ids_for_hostname(cert_host.hostname_id)
 
-            # ports known to not have certs and just slow down the scanner
-            if port in [21, 22, 25, 53, 80, 139, 445, 2082, 3389, 8080]:
-                continue
-
-            print('Checking {} {}'.format(cert_host.hostname, port))
-
-            cert_status = check_cert(cert_host.hostname, port)
-
-            if cert_status:
-                
-                cert_host.port = port
-                
-                cert_host.cert_status = cert_status
-
-                cert_host.url = ''.join( ['https://', cert_host.hostname, ':', str(cert_host.port)] )
-
-                cert_host.platform_host_url = ''.join( ['https://alpha.randori.io/hostnames/', str(cert_host.hostname_id) ] )
-                
-                cert_host.platform_ip_url = ''.join( ['https://alpha.randori.io/ips/', str(cert_host.ip_id) ] )
-                
-                print(cert_host.org_id, cert_host.platform_host_url, cert_host.hostname, cert_host.platform_ip_url, cert_host.url, cert_status)
-                
-                broken_cert_hosts.append(copy(cert_host.__dict__))
+        for ip_id in ip_ids:
+    
+            ports = get_ports_for_ip(ip_id)
+            
+            for port in ports:
+                cert_status = ''
+    
+                # ports known to not have certs and just slow down the scanner
+                if port in [21, 22, 25, 53, 80, 139, 445, 2082, 3389, 8080]:
+                    continue
+    
+                print('Checking {} {}'.format(cert_host.hostname, port))
+    
+                cert_status = check_cert(cert_host.hostname, port)
+    
+                if cert_status:
+                    
+                    cert_host.port = port
+                    
+                    cert_host.cert_status = cert_status
+    
+                    cert_host.url = ''.join( ['https://', cert_host.hostname, ':', str(cert_host.port)] )
+    
+                    cert_host.platform_host_url = ''.join( ['https://alpha.randori.io/hostnames/', str(cert_host.hostname_id) ] )
+                    
+                    #cert_host.platform_ip_url = ''.join( ['https://alpha.randori.io/ips/', str(cert_host.ip_id) ] )
+                    
+                    print(cert_host.org_id, cert_host.platform_host_url, cert_host.hostname, cert_host.platform_ip_url, cert_host.url, cert_status)
+                    
+                    broken_cert_hosts.append(copy(cert_host.__dict__))
 
     
     if not (os.path.isfile(outfile)):
@@ -228,19 +309,19 @@ if __name__ == '__main__':
 
     try:
         sys.argv[1]
+        for filename in [ sys.argv[1] ]:
+            print('Processing {}'.format(filename))
+    
+            with open((path + filename), 'r+') as f:
+                for line in f:
+                    token = line.rstrip('\n').rstrip(',')
+    
+            configuration.access_token = token
         pass
     except IndexError:
-        print("Script requires 1 arugment, the file name for the file containing the API key.")
-        sys.exit(1)
+        configuration.access_token = os.getenv("RANDORI_API_KEY");
 
-    for filename in [ sys.argv[1] ]:
-        print('Processing {}'.format(filename))
-
-        with open((path + filename), 'r+') as f:
-            for line in f:
-                token = line.rstrip('\n').rstrip(',')
-
-        configuration.access_token = token
-        cert_verification()
+    
+    cert_verification()
 
 
