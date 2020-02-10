@@ -24,13 +24,13 @@ initial_query = json.loads('''{
   "condition": "AND",
   "rules": [
     {
-      "field": "table.confidence",
-      "operator": "greater_or_equal",
-      "value": 0
+      "field": "table.hostname",
+      "operator": "equal",
+      "value": "REPLACE_ME"
     }
   ],
   "valid": true
-  }''')
+}''')
 
 
 
@@ -44,7 +44,7 @@ def prep_query(query_object):
 
 
 
-def iterate_hostnames():
+def print_hostname_details(hn):
     more_targets_data= True
     offset = 0
     limit = 200
@@ -52,6 +52,7 @@ def iterate_hostnames():
 
     while more_targets_data:
         
+        initial_query['rules'][0]['value'] = hn
         query = prep_query(initial_query)
 
         try:
@@ -69,11 +70,14 @@ def iterate_hostnames():
             offset = max_records
 
         for hostname in resp.data:
-            #print(hostname)
-            print(hostname.hostname, hostname.confidence)
+            print(hostname)
                 
 
 
 if __name__ == '__main__':
-    iterate_hostnames()
+    try:
+        hn = sys.argv[1]
+        print_hostname_details(hn)
+    except Exception as e:
+        print(e)
     
