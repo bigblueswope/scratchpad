@@ -1,5 +1,8 @@
 Instructions on how to set up a dedicated OSX keychain for api tokens:
 
+This work requires the keyring python module:
+https://pypi.org/project/keyring/
+
 1.  Start the GUI program "Keychain Access"
 
 2.  From the File menu select New Keychain.
@@ -35,4 +38,5 @@ Instructions on how to set up a dedicated OSX keychain for api tokens:
 Note:  When prompted to input the password, if the prompt mentions the specific item you are trying to access such as the item 'orgs' 
     in the command for Step 8, it has an option to "Always Allow".  Choose that option so you are not prompted for permission 
     to read this item in the future.  This will not bypass the need to unlock the Keychain, it will just make the item available 
-    without having to input the Keychain password for THAT item.
+    without having to input the Keychain password for THAT item once the Keychain has been unlocked.
+

@@ -17,9 +17,10 @@ if platform.system() == 'Darwin':
 def get_orgs():
     '''
         Retrieves the list of orgs with api tokens in the Keychain
-        Returns a list with org names
-
+        
         The Keychain is defined in the OS Environment Variable KEYCHAIN_PATH
+        
+        Returns a sorted list with org names
     '''
     orgs = keyring.get_password('orgs', '')
     
@@ -124,4 +125,3 @@ def initialize_orgs():
 
 
 
-#print(get_api_token('aclu'))
