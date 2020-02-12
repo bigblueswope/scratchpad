@@ -68,6 +68,7 @@ def get_counts(endpoint, quiet):
         print("%ss: %i" % (endpoint, resp.total))
 
 
+
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description = 'A script to retrieve total counts of entities')
@@ -97,4 +98,3 @@ if __name__ == '__main__':
     else:
         for endpoint in api_endpoints:
             get_counts(endpoint, args.quiet)
-        

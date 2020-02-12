@@ -23,19 +23,7 @@ r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 #Initial Query:
 #    Confidence Greater Than or Equal To Medium
 #    and
-#    Target Temptation Greater Than or Equal To High
-initial_query = json.loads('''{
-  "condition": "AND",
-  "rules": [
-    {
-      "field": "table.confidence",
-      "operator": "greater_or_equal",
-      "value": 60
-    }
-  ],
-  "valid": true
-  }''')
-
+#    Target Temptation Greater Than or Equal To Zero
 initial_query = json.loads('''{
   "condition": "OR",
   "rules": [

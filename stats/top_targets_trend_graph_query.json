@@ -1,0 +1,20 @@
+{
+  "condition": "AND",
+  "rules": [
+    {
+      "field": "table.current",
+      "operator": "equal",
+      "value": false
+    },
+    {
+      "field": "table.latest",
+      "operator": "equal",
+      "value": false
+    },
+    {
+      "field": "table.name",
+      "operator": "equal",
+      "value": "top_targets"
+    }
+  ]
+}
