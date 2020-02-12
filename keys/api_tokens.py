@@ -51,7 +51,8 @@ def print_orgs():
 
 def get_api_token(org_name):
 
-    assert org_name in get_orgs(), "%s is not in the list of orgs in the Keychain" % org_name
+    if not org_name == 'orgs':
+        assert org_name in get_orgs(), "%s is not in the list of orgs in the Keychain" % org_name
 
     token = keyring.get_password(org_name, '')
     
@@ -123,4 +124,4 @@ def initialize_orgs():
 
 
 
-
+#print(get_api_token('aclu'))

@@ -1,0 +1,38 @@
+Instructions on how to set up a dedicated OSX keychain for api tokens:
+
+1.  Start the GUI program "Keychain Access"
+
+2.  From the File menu select New Keychain.
+
+3.  Name the Keychain using the Save As: field
+
+4.  Click the Create button.
+
+5.  The default location of the new Keychain is
+
+    /Users/<your_username>/Library/Keychains/<name_you_used_in_save_as_field>.keychain-db
+
+6.  On OSX, the keychain python module uses the OS Environment Variable "KEYCHAIN_PATH" to know which Keychain to use.
+
+    A.  You can manually set the Environment Variable using the following command:
+
+            export KEYCHAIN_PATH="/Users/<your_username>/Library/Keychains/<name_you_used_in_save_as_field>.keychain-db"
+
+    B.  You can automatically set the variable by adding the same command to your .bash_profile located in your home directory
+
+7.  Initialize the "orgs" item in the Keychain using the following command (assuming you are in the same directory as "api_tokens.py")
+    Note: you will be prompted for the password to the Keychain anytime you access the Keychain and it is locked. 
+        (Hint: you can configure the lock/timeout value via the "Keychain Access" app)
+    
+    python -c "import api_tokens; api_tokens.initialize_orgs()"
+
+8.  To test if the initialization worked run the following command:
+    python -c "import api_tokens; foo = api_tokens.get_api_token('orgs'); print(foo)"
+
+    If the initialization worked you will see an empty list printed.  If the 'orgs' item already existed
+        you will see the list of orgs in the Keychain.
+
+Note:  When prompted to input the password, if the prompt mentions the specific item you are trying to access such as the item 'orgs' 
+    in the command for Step 8, it has an option to "Always Allow".  Choose that option so you are not prompted for permission 
+    to read this item in the future.  This will not bypass the need to unlock the Keychain, it will just make the item available 
+    without having to input the Keychain password for THAT item.
