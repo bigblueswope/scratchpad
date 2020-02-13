@@ -9,6 +9,8 @@ import socket
 import randori_api
 from randori_api.rest import ApiException
 
+from keys.api_tokens import get_api_token
+
 from libs.threaded_name_resolution import resolve_list_of_hostnames
 
 #Note:
@@ -20,7 +22,10 @@ from libs.threaded_name_resolution import resolve_list_of_hostnames
 
 configuration = randori_api.Configuration()
 
-configuration.access_token = os.getenv("RANDORI_API_KEY");
+org_name = os.getenv("RANDORI_ENV")
+
+configuration.access_token = get_api_token(org_name);
+#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 

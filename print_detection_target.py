@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import base64
 import datetime
 import json
@@ -13,9 +11,14 @@ import sys
 import randori_api
 from randori_api.rest import ApiException
 
+from keys.api_tokens import get_api_token
+
 configuration = randori_api.Configuration()
 
-configuration.access_token = os.getenv("RANDORI_API_KEY");
+org_name = os.getenv("RANDORI_ENV")
+
+configuration.access_token = get_api_token(org_name);
+#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 

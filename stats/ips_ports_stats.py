@@ -10,14 +10,19 @@ import sys
 import randori_api
 from randori_api.rest import ApiException
 
+from keys.api_tokens import get_api_token
+
 configuration = randori_api.Configuration()
+
+org_name = os.getenv("RANDORI_ENV")
 
 # Normal scripts use the environment variable to set the API Key
 #  because they only look at data for one Org
 #  but this script will iterate over all API Keys
 #  and replace this value for each one of them
 #  because it is generating stats for ALL Orgs
-configuration.access_token = os.getenv("RANDORI_API_KEY");
+configuration.access_token = get_api_token(org_name);
+#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
@@ -202,6 +207,7 @@ def default_function():
 
 
 if __name__ == '__main__':
+    #TODO: REWRITE logic to use list of orgs in Keychain
     path = '/Users/bj/.tokens/'
 
     for filename in os.listdir(path):

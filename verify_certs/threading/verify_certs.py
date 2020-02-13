@@ -18,9 +18,14 @@ import time
 import randori_api
 from randori_api.rest import ApiException
 
+from keys.api_tokens import get_api_token
+
 configuration = randori_api.Configuration()
 
+org_name = os.getenv("RANDORI_ENV")
+
 # replaced with iteration over token files
+configuration.access_token = get_api_token(org_name);
 #configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
@@ -318,6 +323,7 @@ if __name__ == '__main__':
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt='%H:%M:%S')
 
+    #TODO: Rewrite to use list of orgs from Keychain
     path = '/Users/bj/.tokens/'
 
     token_files = os.listdir(path)

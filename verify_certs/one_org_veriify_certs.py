@@ -11,6 +11,8 @@ import sys
 import randori_api
 from randori_api.rest import ApiException
 
+from keys.api_tokens import get_api_token
+
 configuration = randori_api.Configuration()
 
 configuration.host = "https://alpha.randori.io"
@@ -305,6 +307,7 @@ def cert_verification():
 
 
 if __name__ == '__main__':
+    #TODO: Rewrite to use list of orgs from Keychain
     path = '/Users/bj/.tokens/'
 
     try:

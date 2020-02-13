@@ -9,9 +9,14 @@ from randori_api.rest import ApiException
 
 from time import sleep
 
+from keys.api_tokens import get_api_token
+
 configuration = randori_api.Configuration()
 
-configuration.access_token = os.getenv("RANDORI_API_KEY");
+org_name = os.getenv("RANDORI_ENV")
+
+configuration.access_token = get_api_token(org_name);
+#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
@@ -108,6 +113,7 @@ if __name__ == '__main__':
     daily_counts = {}
 
     if args.Org:
+        #TODO: Rewrite to use org details from Keychain
         filename = args.Org
         
         with open((path + filename), 'r+') as f:
@@ -132,6 +138,7 @@ if __name__ == '__main__':
 
     total_targets = 0
     
+    #TODO: Rewrite to us list of orgs from Keychain
     for filename in os.listdir(path):
         sleep(1)
         sys.stderr.write('Processing %s\n' %filename)
