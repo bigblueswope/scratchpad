@@ -69,8 +69,12 @@ if __name__ == "__main__":
             if domain == 'domainName':
                 continue
             
-            xfer_hosts.append(try_zone_xfer(domain))
+            results = try_zone_xfer(domain)
 
+            for host in results:
+                xfer_hosts.append(host)
+
+    print(xfer_hosts)
 
     if args.output:
         with open(args.output, 'w+') as outfile:
