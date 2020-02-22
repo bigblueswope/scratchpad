@@ -7,6 +7,8 @@ import sys
 import randori_api
 from randori_api.rest import ApiException
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
 from keys.api_tokens import get_api_token
 
 configuration = randori_api.Configuration()
@@ -47,7 +49,7 @@ def prep_query(query_object):
 
 
 
-def get_counts(endpoint, quiet):
+def get_counts(endpoint, verbose):
 
     funct_name = 'get_' + endpoint
 
@@ -67,7 +69,7 @@ def get_counts(endpoint, quiet):
         print("Exception in RandoriApi->%s: %s\n" % (funct_name,e))
         sys.exit(1)
 
-    if quiet:
+    if not verbose:
         print("%i" % resp.total)
     else:
         print("%ss: %i" % (endpoint, resp.total))
@@ -85,7 +87,8 @@ if __name__ == '__main__':
     optional.add_argument ("-l", "--list_endpoints", action='store_true', default=False,
         help="If the list_endpoints argument is provided, print the available endpoints and exit.")
 
-    optional.add_argument ("-q", "--quiet", action='store_true', default=False,
+    optional.add_argument ("-v", "--verbose", default=False,
+    #optional.add_argument ("-v", "--verbose", action='store_true', default=False,
         help="If quiet flag is given, do not print endpoint names, print just the counts.")
     parser._action_groups.append(optional)
 
@@ -98,8 +101,8 @@ if __name__ == '__main__':
         sys.exit(0)
 
     if args.endpoint:
-        get_counts(args.endpoint, args.quiet)
+        get_counts(args.endpoint, args.verbose)
 
     else:
         for endpoint in api_endpoints:
-            get_counts(endpoint, args.quiet)
+            get_counts(endpoint, args.verbose)

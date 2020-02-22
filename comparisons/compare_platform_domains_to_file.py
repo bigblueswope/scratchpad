@@ -9,6 +9,8 @@ import socket
 import randori_api
 from randori_api.rest import ApiException
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
 from keys.api_tokens import get_api_token
 
 #Note:
@@ -113,7 +115,7 @@ if __name__ == '__main__':
     
     with open(args.input, 'r+') as f:
         for line in f:
-            new_domain = line.rstrip('\n').rstrip(',')
+            new_domain = line.lstrip('*.').rstrip('\n.,')
 
             if new_domain == 'domainName':
                 continue

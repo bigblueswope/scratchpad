@@ -10,6 +10,8 @@ import sys
 import randori_api
 from randori_api.rest import ApiException
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
 from keys.api_tokens import get_api_token
 
 configuration = randori_api.Configuration()

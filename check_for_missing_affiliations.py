@@ -23,11 +23,8 @@ def notify(text, title):
 
 def parse_filename(fn):
     # missing_affiliations_31219bf6-8545-4075-9771-950edc0834ed-2019-10-10T14:05:59.042542.txt
-    #print("Filename:", fn)
     
     parts = fn.split('_')[-1:][0]
-
-    #print("Parts:", parts)
 
     uuid = '-'.join(parts.split('-',5)[:-1])
 
@@ -40,14 +37,11 @@ def parse_filename(fn):
 
 def lookup_org(uuid):
     
-    #print("Org UUID:", uuid)
-
     query = "select org_name from stats.orgs where org_id = '%s'" % (uuid)
 
     query_results = bq_client.query(query, location='US')
     
     for row in query_results: 
-        #print("Query Results row:", row)
 
         # Row values can be accessed by field name or index
         #assert row[0] == row.org_name == row["org_name"]

@@ -9,6 +9,8 @@ import socket
 import randori_api
 from randori_api.rest import ApiException
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
 from keys.api_tokens import get_api_token
 
 from libs.threaded_name_resolution import resolve_list_of_hostnames
@@ -174,7 +176,7 @@ if __name__ == '__main__':
     
     with open(args.input, 'r+') as f:
         for line in f:
-            new_hostname = line.rstrip('\n').rstrip(',')
+            new_hostname = line.lstrip('*.').rstrip('\n.,')
 
             if new_hostname == 'domainName':
                 continue
