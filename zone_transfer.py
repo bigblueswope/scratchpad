@@ -3,11 +3,16 @@ import dns.query
 import dns.resolver
 import dns.zone
 
+import threading
+from time import sleep
+from queue import Queue
+
 
 
 def try_zone_xfer(domain):
-    fqdns = []
-    
+
+    print("%s Attempting Zone Transfer: %s" % (threading.currentThread().getName(), domain))
+            
     try:
         soa_answer = dns.resolver.query(domain, 'SOA')
     except Exception as e:
@@ -38,12 +43,10 @@ def try_zone_xfer(domain):
             
             fqdn = '.'.join((name, domain)) 
             
-            fqdns.append(fqdn)
+            xfer_hosts.append(fqdn)
 
     except Exception as e:
         print("Exception transferring domain %s: %s" % (domain, str(e)))
-    
-    return fqdns
 
 
 
@@ -60,6 +63,8 @@ if __name__ == "__main__":
     
     xfer_hosts = []
 
+    doms_q = Queue()
+
     with open(args.input, 'r+') as f:
 
         for line in f:
@@ -69,10 +74,27 @@ if __name__ == "__main__":
             if domain == 'domainName':
                 continue
             
-            results = try_zone_xfer(domain)
+            doms_q.put(domain)
 
-            for host in results:
-                xfer_hosts.append(host)
+    def worker():
+        while not doms_q.empty():
+            
+            dom = doms_q.get()
+            
+            try_zone_xfer(dom)
+            
+            doms_q.task_done()
+
+    # Use many threads (20 max, or one for each domain, which ever is less)
+    num_worker_threads = min(20, doms_q.qsize())
+
+    for i in range(num_worker_threads):
+         t = threading.Thread(target=worker)
+         t.daemon = True
+         t.start()
+
+    doms_q.join()       # block until all tasks are done
+
 
     print(xfer_hosts)
 

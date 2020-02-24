@@ -1,4 +1,3 @@
-from copy import copy
 import base64
 import http.client
 import json
@@ -6,14 +5,25 @@ import os
 import socket
 import ssl
 import sys
+import threading
+
+from copy import copy
+from queue import Queue
 
 
 import randori_api
 from randori_api.rest import ApiException
 
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
+
 from keys.api_tokens import get_api_token
 
+
 configuration = randori_api.Configuration()
+
+org_name = os.getenv("RANDORI_ENV")
+
+configuration.access_token = get_api_token(org_name);
 
 configuration.host = "https://alpha.randori.io"
 
@@ -25,8 +35,7 @@ class cert_host:
         self.hostname_id = hostname_id
         self.org_id = org_id
         self.hostname = hostname
-        #self.ip_id = ip_id
-        self.port = ''
+        self.ports = []
         self.cert_status = ''
         self.url = ''
         self.platform_host_url = ''
@@ -44,6 +53,8 @@ def check_cert(hostname, port):
     except ssl.SSLCertVerificationError as e:
         if e.verify_code == 10:
             cert_status = 'Expired Cert'
+        elif e.verify_code == 64:
+            cert_status = 'Cert IP mismatch'
         elif e.verify_code == 62:
             cert_status = 'Cert Name Mismatch'
         elif e.verify_code == 18:
@@ -180,23 +191,24 @@ init_query_and_tags = json.loads('''{
       "rules": [
         {
           "field": "table.tags",
-          "operator": "not_has_key",
-          "value": "Self-Signed Cert"
+          "operator": "not_contains",
+          "value": [
+            "Self-Signed Cert"
+          ]
         },
         {
           "field": "table.tags",
-          "operator": "not_has_key",
-          "value": "Cert Name Mismatch"
+          "operator": "not_contains",
+          "value": [
+            "Cert Name Mismatch"
+          ]
         },
         {
           "field": "table.tags",
-          "operator": "not_has_key",
-          "value": "Self-Signed CA"
-        },
-        {
-          "field": "table.tags",
-          "operator": "not_has_key",
-          "value": "Expired Cert"
+          "operator": "not_contains",
+          "value": [
+            "Self-Signed CA"
+          ]
         }
       ]
     }
@@ -248,83 +260,96 @@ def iterate_hostnames():
 
 
 
-def cert_verification():
-    broken_cert_hosts= []
-    
-    cert_hosts = iterate_hostnames()
-    
-    org_id = cert_hosts[0].org_id
-    
-    outfile = org_id + ".json"
-    
-    if (os.path.isfile(outfile)):
-        print('Out file for OrgID Exists: {}'.format(org_id))
-        print("Exiting script.  Move or remove %s and rerun the script" % outfile)
-        return
+def build_list_of_cert_hosts():
 
+    cert_hosts = iterate_hostnames()
+
+    org_id = cert_hosts[0].org_id
 
     for cert_host in cert_hosts:
         
         ip_ids = get_ip_ids_for_hostname(cert_host.hostname_id)
-
+        
         for ip_id in ip_ids:
     
             ports = get_ports_for_ip(ip_id)
+
+            print("Ports for %s: %s" % (cert_host.hostname, ports))
             
             for port in ports:
+
                 cert_status = ''
     
                 # ports known to not have certs and just slow down the scanner
                 if port in [21, 22, 25, 53, 80, 139, 445, 2082, 3389, 8080]:
                     continue
+                
+                if port not in cert_host.ports:
+                    cert_host.ports.append(port)
+                
+        source_q.put(cert_host)
+
+    return org_id
+
+
     
+def do_cert_work():
+    while True:
+        if not source_q.empty():
+            
+            cert_host = source_q.get()
+            
+            for port in cert_host.ports:
+
                 print('Checking {} {}'.format(cert_host.hostname, port))
-    
+
                 cert_status = check_cert(cert_host.hostname, port)
-    
+                
                 if cert_status:
                     
-                    cert_host.port = port
-                    
                     cert_host.cert_status = cert_status
-    
-                    cert_host.url = ''.join( ['https://', cert_host.hostname, ':', str(cert_host.port)] )
-    
+                
+                    cert_host.url = ''.join( ['https://', cert_host.hostname, ':', str(port)] )
+                
                     cert_host.platform_host_url = ''.join( ['https://alpha.randori.io/hostnames/', str(cert_host.hostname_id) ] )
-                    
-                    #cert_host.platform_ip_url = ''.join( ['https://alpha.randori.io/ips/', str(cert_host.ip_id) ] )
-                    
-                    print(cert_host.org_id, cert_host.platform_host_url, cert_host.hostname, cert_host.platform_ip_url, cert_host.url, cert_status)
-                    
+                          
+                    print(cert_host.org_id, cert_host.platform_host_url, cert_host.hostname, cert_host.url, cert_status)
+                            
                     broken_cert_hosts.append(copy(cert_host.__dict__))
+            
+            source_q.task_done()
 
+
+if __name__ == '__main__':
+    
+    broken_cert_hosts = []
+
+    source_q = Queue()
+    
+    org_id = build_list_of_cert_hosts()
+
+    outfile = org_id + ".json"
+
+    print("Org ID: %s" % org_id)
+    
+    if (os.path.isfile(outfile)):
+        print('Out file for OrgID Exists: {}'.format(org_id))
+        print("Exiting script.  Move or remove %s and rerun the script" % outfile)
+        sys.exit(1)
+
+    num_worker_threads = min(20, source_q.qsize())
+    
+    for i in range(num_worker_threads):
+         t = threading.Thread(target=do_cert_work)
+         t.daemon = True
+         t.start()
+    
+    source_q.join()       # block until all tasks are done
     
     if not (os.path.isfile(outfile)):
         with open(outfile, 'w') as f:
             json.dump(broken_cert_hosts, f)
 
 
-
-
-if __name__ == '__main__':
-    #TODO: Rewrite to use list of orgs from Keychain
-    path = '/Users/bj/.tokens/'
-
-    try:
-        sys.argv[1]
-        for filename in [ sys.argv[1] ]:
-            print('Processing {}'.format(filename))
-    
-            with open((path + filename), 'r+') as f:
-                for line in f:
-                    token = line.rstrip('\n').rstrip(',')
-    
-            configuration.access_token = token
-        pass
-    except IndexError:
-        configuration.access_token = os.getenv("RANDORI_API_KEY");
-
-    
-    cert_verification()
 
 

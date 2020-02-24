@@ -27,7 +27,6 @@ configuration = randori_api.Configuration()
 org_name = os.getenv("RANDORI_ENV")
 
 configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
