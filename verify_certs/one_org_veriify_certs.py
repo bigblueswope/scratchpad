@@ -73,10 +73,12 @@ def check_cert(hostname, port):
         cert_status = ''
     except ConnectionRefusedError:
         cert_status = ''
+    except BrokenPipeError:
+        cert_status = ''
     finally:
         connection.close()
+        return cert_status
 
-    return cert_status
 
 
 
@@ -266,6 +268,13 @@ def build_list_of_cert_hosts():
 
     org_id = cert_hosts[0].org_id
 
+    outfile = org_id + ".json"
+
+    if (os.path.isfile(outfile)):
+        print('Out file for OrgID Exists: {}'.format(org_id))
+        print("Exiting script.  Move or remove %s and rerun the script" % outfile)
+        sys.exit(1)
+
     for cert_host in cert_hosts:
         
         ip_ids = get_ip_ids_for_hostname(cert_host.hostname_id)
@@ -298,6 +307,8 @@ def do_cert_work():
         if not source_q.empty():
             
             cert_host = source_q.get()
+
+            print("Queue length: %s" % source_q.qsize())
             
             for port in cert_host.ports:
 
@@ -332,11 +343,6 @@ if __name__ == '__main__':
 
     print("Org ID: %s" % org_id)
     
-    if (os.path.isfile(outfile)):
-        print('Out file for OrgID Exists: {}'.format(org_id))
-        print("Exiting script.  Move or remove %s and rerun the script" % outfile)
-        sys.exit(1)
-
     num_worker_threads = min(20, source_q.qsize())
     
     for i in range(num_worker_threads):

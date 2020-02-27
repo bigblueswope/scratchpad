@@ -45,8 +45,8 @@ def print_orgs():
         sys.exit(1)
         
     else:
-        
-        print(orgs)
+        for org in orgs:
+            print(org)
 
 
 
