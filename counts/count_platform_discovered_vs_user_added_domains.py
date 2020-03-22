@@ -1,29 +1,12 @@
-from __future__ import print_function
 import argparse
 import base64
 import datetime
 import json
-import logging
-import logging.handlers
 import os
-from pathlib import Path
 import sys
 
-import randori_api
-from randori_api.rest import ApiException
-
-from keys.api_tokens import get_api_token
-
-configuration = randori_api.Configuration()
-
-org_name = os.getenv("RANDORI_ENV")
-
-configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
-
-configuration.host = "https://alpha.randori.io"
-
-r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
+import common_functions
+import entity_detector
 
 
 #Initial Query:
@@ -48,17 +31,6 @@ initial_query = json.loads('''{
 }''')
 
 
-
-def prep_query(query_object):
-
-   iq = json.dumps(query_object).encode()
-
-   query = base64.b64encode(iq)
-
-   return query
-
-
-
 ##########
 # Sample JSON returned by get_hostname
 ##########
@@ -72,12 +44,12 @@ def prep_query(query_object):
  'last_seen': datetime.datetime(2019, 12, 10, 6, 48, 21, 163969, tzinfo=tzutc()),
  'max_confidence': 100,
  'name_type': 0,
- 'org_id': '2cf5a2db-d863-43ea-b08e-a15816d60062',
+ 'org_id': '3cf5a2db-d863-43eb-b08e-a15816d70062',
  'tags': {'User Provided': {'content': 'User Provided',
                             'display': True,
                             'hostname_uuid': '675c5c33-c1ec-4b5d-a888-b99e5b1527de',
                             'time_added': '2019-12-03T15:04:42.830842+00:00',
-                            'user_id': '16c5a4d7-92c4-4207-953a-dd11fd4432b7'}},
+                            'user_id': '16c5a6d7-92c4-4207-9535-dd11f94432b7'}},
  'target_temptation': 0}
  '''
 
@@ -92,12 +64,12 @@ def get_platform_domains():
 
     while more_data:
         
-        query = prep_query(initial_query)
+        query = common_functions.prep_query(initial_query)
 
         try:
-            resp = r_api.get_hostname(offset=offset, limit=limit,
+            resp = common_functions.r_api.get_hostname(offset=offset, limit=limit,
                                     sort=sort, q=query)
-        except ApiException as e:
+        except common_functions.ApiException as e:
             print("Exception in RandoriApi->get_hostname: %s\n" % e)
             sys.exit(1)
 
@@ -116,13 +88,18 @@ def get_platform_domains():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Iterates all domains for an org and separates into lists')
+
     optional = parser._action_groups.pop()
+
     optional.add_argument("-v", "--verbose", default=False, action="store_true",
         help="If the verbose arg/flag is provided, print domains to std out.")
+
     optional.add_argument("-u", "--user_added", default=False, action="store_true",
         help="If the user arg/flag is provided, print user provided domains to std out.")
+
     optional.add_argument("-p", "--platform_discovered", default=False, action="store_true",
         help="If the platform discovered arg/flag is provided, print platform discovered domains to std out.")
+
     parser._action_groups.append(optional)
 
     args = parser.parse_args()

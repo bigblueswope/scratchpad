@@ -14,10 +14,7 @@ from queue import Queue
 import randori_api
 from randori_api.rest import ApiException
 
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-
-from keys.api_tokens import get_api_token
-
+from api_tokens import get_api_token
 
 configuration = randori_api.Configuration()
 
@@ -134,7 +131,7 @@ host_id_to_ip_id_query = json.loads('''{
     {
       "field": "table.hostname_id",
       "operator": "equal",
-      "value": "foo"
+      "value": ""
     }
   ],
   "valid": true
@@ -150,8 +147,6 @@ def get_ip_ids_for_hostname(hostname_id):
 
     host_id_to_ip_id_query['rules'][0]['value'] = hostname_id
 
-    #print(host_id_to_ip_id_query)
-    
     q = prep_query(host_id_to_ip_id_query)
 
     try:
@@ -221,8 +216,7 @@ init_query_and_tags = json.loads('''{
 
 
 def iterate_hostnames():
-    # preloading hostnames with connect.ushworks.com because it crashes the script
-    hostnames = ['connect.ushworks.com']
+    hostnames = []
     cert_hosts = []
     more_targets_data= True
     offset = 0
@@ -231,8 +225,8 @@ def iterate_hostnames():
 
     while more_targets_data:
         
-        query = prep_query(init_query_and_tags)
-        #query = prep_query(initial_query)
+        #query = prep_query(init_query_and_tags)
+        query = prep_query(initial_query)
 
         try:
             resp = r_api.get_hostname(offset=offset, limit=limit,
@@ -252,11 +246,8 @@ def iterate_hostnames():
             if h.hostname in hostnames:
                 continue
             else:
-                #print(h)
-                #print(h.hostname)
                 hostnames.append(h.hostname)
                 cert_hosts.append(cert_host(h.id, h.org_id, h.hostname))
-                #cert_hosts.append(cert_host(h.hostname_id, h.org_id, h.hostname, h.ip_id))
         
     return cert_hosts
 
@@ -267,13 +258,6 @@ def build_list_of_cert_hosts():
     cert_hosts = iterate_hostnames()
 
     org_id = cert_hosts[0].org_id
-
-    outfile = org_id + ".json"
-
-    if (os.path.isfile(outfile)):
-        print('Out file for OrgID Exists: {}'.format(org_id))
-        print("Exiting script.  Move or remove %s and rerun the script" % outfile)
-        sys.exit(1)
 
     for cert_host in cert_hosts:
         
@@ -324,7 +308,7 @@ def do_cert_work():
                 
                     cert_host.platform_host_url = ''.join( ['https://alpha.randori.io/hostnames/', str(cert_host.hostname_id) ] )
                           
-                    print(cert_host.org_id, cert_host.platform_host_url, cert_host.hostname, cert_host.url, cert_status)
+                    print(cert_host.platform_host_url, cert_status, cert_host.hostname, cert_host.url, cert_host.org_id)
                             
                     broken_cert_hosts.append(copy(cert_host.__dict__))
             
@@ -339,7 +323,7 @@ if __name__ == '__main__':
     
     org_id = build_list_of_cert_hosts()
 
-    outfile = org_id + ".json"
+    outfile = "verify_certs/results/" + org_id + ".json"
 
     print("Org ID: %s" % org_id)
     
@@ -352,10 +336,6 @@ if __name__ == '__main__':
     
     source_q.join()       # block until all tasks are done
     
-    if not (os.path.isfile(outfile)):
-        with open(outfile, 'w') as f:
-            json.dump(broken_cert_hosts, f)
-
-
-
+    with open(outfile, 'w') as f:
+        json.dump(broken_cert_hosts, f)
 

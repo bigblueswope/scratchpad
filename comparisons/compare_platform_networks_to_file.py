@@ -4,23 +4,8 @@ import json
 import os
 import sys
 
-import randori_api
-from randori_api.rest import ApiException
-
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-
-from keys.api_tokens import get_api_token
-
-configuration = randori_api.Configuration()
-
-org_name = os.getenv("RANDORI_ENV")
-
-configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
-
-configuration.host = "https://alpha.randori.io"
-
-r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
+import common_functions
+import entity_detector
 
 
 #Initial Query:
@@ -40,15 +25,6 @@ initial_query = json.loads('''{
 
 
 
-def prep_query(query_object):
-
-   iq = json.dumps(query_object).encode()
-
-   query = base64.b64encode(iq)
-
-   return query
-
-
 
 def get_platform_networks():
     
@@ -61,12 +37,12 @@ def get_platform_networks():
 
     while more_data:
         
-        query = prep_query(initial_query)
+        query = common_functions.prep_query(initial_query)
 
         try:
-            resp = r_api.get_network(offset=offset, limit=limit,
+            resp = common_functions.r_api.get_network(offset=offset, limit=limit,
                                     sort=sort, q=query)
-        except ApiException as e:
+        except common_functions.ApiException as e:
             print("Exception in RandoriApi->get_network: %s\n" % e)
             sys.exit(1)
 
@@ -78,20 +54,27 @@ def get_platform_networks():
             offset = max_records
 
         for network in resp.data:
-            #print(network)
             if not network.network in platform_networks.keys():
                 platform_networks[network.network] = network.confidence
 
     return platform_networks
 
+
+
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description = 'Compare File With Networks to Existing Networks in Platform')
+
     optional = parser._action_groups.pop()
+
     required = parser.add_argument_group('required arguments')
+
     required.add_argument("-i", "--input", required=True, 
         help="File with possible additional networks")
+
     optional.add_argument("-o", "--output", default=False, 
         help="If the output arg/flag is provided, write missing networks to outfile.")
+
     parser._action_groups.append(optional)
 
     args = parser.parse_args()
@@ -101,11 +84,24 @@ if __name__ == '__main__':
     addl_networks= []
     both_networks = {}
     low_confidence_networks = {}
+    non_networks = []
     src_duplicates = 0
 
     with open(args.input, 'r+') as f:
+
         for line in f:
-            new_network = line.rstrip('\n,.')
+        
+            new_network = common_functions.line_cleaner(line)
+
+            if not new_network:
+                continue
+
+            ent_type, _, _ = entity_detector.detect_entity(new_network)
+
+            if not ent_type == 'networks':
+                non_networks.append(new_network)
+                continue
+
 
             if not new_network in platform_networks.keys() and not new_network in addl_networks:
                 addl_networks.append(new_network)
@@ -141,4 +137,6 @@ if __name__ == '__main__':
 
     sys.stderr.write("\nLow or Lesser Confidence Networks in Platform and Input file:%s\n" % low_confidence_networks)
     
+    sys.stderr.write("\nNon-Network entities in input file: %s\n" % non_networks)
+
 

@@ -5,6 +5,8 @@ hash.hash#second part
 ,foo.bar,
  blah.spaces 
 .dots.dots.
+#there's a tab on the end of the next line
+"ohcanada-rt-stage4.campaign.adobe.com.    
 
 
 # domains
@@ -17,6 +19,7 @@ www.names.co.uk
 www.google.com
 localhost
 localhost.local
+www.randori.com,
 
 # networks
 65.51.183.0/24
@@ -27,6 +30,7 @@ localhost.local
 2001:558:feed::1
 1000000000
 107.20.133.205
+20000000 # becomes '1.49.45.0'
 
 #urls with ips and hostnames
 http://5.6.7.8
@@ -41,10 +45,11 @@ http:/13.14.15.16
 65.51.183.0/99
 1.2.3.1000
 255.255
+ip-10-0-114-106.ec2.internal
 
 # reserved, private or loopback IPs
-1000
-100000000000
+1000 # becomes '0.0.3.232'
+100000000000 # becomes '::17:4876:e800'
 10.0.0.1
 127.0.0.100
 0:0:0:0:0:0:0:1

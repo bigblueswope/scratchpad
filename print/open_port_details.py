@@ -1,57 +1,29 @@
 import base64
 import datetime
 import json
-import logging
-import logging.handlers
 import os
-from pathlib import Path
 import sys
 
 import randori_api
 from randori_api.rest import ApiException
 
-from keys.api_tokens import get_api_token
+from api_tokens import get_api_token
 
 configuration = randori_api.Configuration()
 
 org_name = os.getenv("RANDORI_ENV")
 
 configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
 r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 
-logger = logging.getLogger(__name__)
-
-logger.setLevel(logging.DEBUG)
-
-syslog_server = ''
-
-if syslog_server:
-    syslog_handler = logging.handlers.SysLogHandler(address=(syslog_server, 
-                                                             514))
-    logger.addHandler(syslog_handler)
-
-output_log = ''
-
-if output_log:
-    Path(output_log).touch(exist_ok=True)
-    file_handler = logging.FileHandler(output_log)
-    logger.addHandler(file_handler)
-
-log_to_console = True
-
-if not (output_log or syslog_server) or log_to_console:
-    console_handler = logging.StreamHandler()
-    logger.addHandler(console_handler)
-
 
 #Initial Query:
 #    Confidence Greater Than or Equal To Medium
 #    and
-#    Has Open Ports
+#    Target Temptation Greater Than or Equal To High
 initial_query = json.loads('''{
   "condition": "AND",
   "rules": [
@@ -70,6 +42,27 @@ initial_query = json.loads('''{
 }
 ''')
 
+initial_query = json.loads('''{
+  "condition": "AND",
+  "rules": [
+    {
+      "field": "table.confidence",
+      "operator": "greater_or_equal",
+      "value": 60
+    },
+    {
+      "field": "table.port",
+      "operator": "equal",
+      "value": 5900
+    },
+    {
+      "field": "table.state",
+      "operator": "equal",
+      "value": "open"
+    }
+  ],
+  "valid": true
+  }''')
 
 
 def prep_query(query_object):
@@ -135,8 +128,8 @@ def iterate_ips_with_ports():
             offset = max_records
 
         for ip in resp.data:
-            print(ip.port)
-
+            print(ip)
+            #print(ip.port)
                 
 
 

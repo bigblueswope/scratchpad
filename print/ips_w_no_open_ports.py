@@ -1,48 +1,29 @@
 import base64
 import datetime
 import json
-import logging
-import logging.handlers
 import os
-from pathlib import Path
 import sys
 
 import randori_api
 from randori_api.rest import ApiException
 
-from keys.api_tokens import get_api_token
+from api_tokens import get_api_token
 
 configuration = randori_api.Configuration()
 
 org_name = os.getenv("RANDORI_ENV")
 
 configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
 r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 
-
-#Initial Query:
-#    Confidence Greater Than or Equal To Medium
-#    and
-#    Target Temptation Greater Than or Equal To High
 initial_query = json.loads('''{
   "condition": "AND",
   "rules": [
     {
-      "field": "table.confidence",
-      "operator": "greater_or_equal",
-      "value": 60
-    },
-    {
       "field": "table.open_port_count",
-      "operator": "greater",
-      "value": 0
-    },
-    {
-      "field": "table.target_count",
       "operator": "equal",
       "value": 0
     }
@@ -62,13 +43,13 @@ def prep_query(query_object):
 
 
 
-def iterate_ips():
-    more_data= True
+def iterate_ips_with_ports():
+    more_targets_data= True
     offset = 0
     limit = 200
-    sort = ['ip']
+    sort = ['confidence']
 
-    while more_data:
+    while more_targets_data:
         
         query = prep_query(initial_query)
 
@@ -82,19 +63,16 @@ def iterate_ips():
         max_records = offset + limit
     
         if resp.total <= max_records:
-            more_data = False
+            more_targets_data = False
         else:
             offset = max_records
-        
-        ip_count = 0
 
         for ip in resp.data:
-            ip_count += 1
             print(ip)
-            #print(ip.ip, ip.confidence)
-        print("Count of IPs with Ports but no Targets: %s" % ip_count)
+
+                
 
 
 if __name__ == '__main__':
-    iterate_ips()
+    iterate_ips_with_ports()
     

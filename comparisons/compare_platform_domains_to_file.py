@@ -6,12 +6,9 @@ import os
 import sys
 import socket
 
-import randori_api
-from randori_api.rest import ApiException
+import common_functions
+import entity_detector
 
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-
-from keys.api_tokens import get_api_token
 
 #Note:
 #  Instead of print statements, much of the output uses
@@ -19,17 +16,6 @@ from keys.api_tokens import get_api_token
 #  This is so you can pipe the output of domains that need to be added
 #      into another program or redirect to a file (which can be done 
 #      by providing a -o outfile argument too).
-
-configuration = randori_api.Configuration()
-
-org_name = os.getenv("RANDORI_ENV")
-
-configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
-
-configuration.host = "https://alpha.randori.io"
-
-r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 
 
 #Initial Query:
@@ -48,14 +34,6 @@ initial_query = json.loads('''{
 
 
 
-def prep_query(query_object):
-
-   iq = json.dumps(query_object).encode()
-
-   query = base64.b64encode(iq)
-
-   return query
-
 
 def get_platform_domains():
     
@@ -63,17 +41,17 @@ def get_platform_domains():
 
     more_data= True
     offset = 0
-    limit = 200
+    limit = 1000
     sort = ['hostname']
+
+    query = common_functions.prep_query(initial_query)
 
     while more_data:
         
-        query = prep_query(initial_query)
-
         try:
-            resp = r_api.get_hostname(offset=offset, limit=limit,
+            resp = common_functions.r_api.get_hostname(offset=offset, limit=limit,
                                     sort=sort, q=query)
-        except ApiException as e:
+        except common_functions.ApiException as e:
             print("Exception in RandoriApi->get_hostname: %s\n" % e)
             sys.exit(1)
 
@@ -95,11 +73,16 @@ def get_platform_domains():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Compare File With Domains to Existing Domains in Platform')
+
     optional = parser._action_groups.pop()
+
     required = parser.add_argument_group('required arguments')
+
     required.add_argument("-i", "--input", required=True, help="File with possible additional domains")
+
     optional.add_argument("-o", "--output", default=False, 
         help="If the output arg/flag is provided, write missing domains to outfile.")
+
     parser._action_groups.append(optional)
 
     args = parser.parse_args()
@@ -108,20 +91,28 @@ if __name__ == '__main__':
     
     both_domains = {}
     addl_domains = []
-    
+    non_domain_entities = []
     count_of_input_items = 0
     count_of_unique_input_items_not_in_platform = 0
 
     
     with open(args.input, 'r+') as f:
-        for line in f:
-            new_domain = line.lstrip('*.').rstrip('\n.,')
 
-            if new_domain == 'domainName':
+        for line in f:
+
+            new_domain = common_functions.line_cleaner(line)
+
+            if not new_domain: 
                 continue
             
             # Number of lines in input file
             count_of_input_items += 1
+
+            entity_type, _, _ = entity_detector.detect_entity(new_domain)
+
+            if not entity_type == 'domains':
+                non_domain_entities.append(new_domain)
+                continue
 
             # host/domain does not exist in the Platform and is not a 
             #   duplicate in the input file
@@ -155,11 +146,13 @@ if __name__ == '__main__':
             for dom in addl_domains:
                 outfile.write("%s\n" % (dom))
             
-    sys.stderr.write("\nCount of items in input file: %s\n" % str(count_of_input_items))
+    sys.stderr.write("\nCount of items in input file: %i\n" % count_of_input_items)
     
-    sys.stderr.write("\nCount of unique items in input file and not in platform: %s\n" % str(count_of_unique_input_items_not_in_platform))
+    sys.stderr.write("\nCount of unique items in input file and not in platform: %i\n" % count_of_unique_input_items_not_in_platform)
     
-    sys.stderr.write("\nCount of domains in Platform and input file: %s\n" % str(len(both_domains)))
+    sys.stderr.write("\nCount of domains in Platform and input file: %i\n" % len(both_domains))
+
+    sys.stderr.write("\nCount of non-domain entities in input file: %i\n" % len(non_domain_entities))
 
     sys.stderr.write("\nItems and their confidence in both Platform and input file: %s\n" % both_domains)
 

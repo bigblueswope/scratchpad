@@ -10,7 +10,9 @@ import sys
 # 16,777,110 characters
 
 if platform.system() == 'Darwin':
+
     keychain_file = os.environ.get('KEYCHAIN_PATH')
+
     assert keychain_file, "OS Environment Variable 'KEYCHAIN_PATH' is not defined"
 
 
@@ -53,8 +55,12 @@ def print_orgs():
 def get_api_token(org_name):
 
     if not org_name:
+
         org_name = input("Org Name: ")
+    
+
     if not org_name == 'orgs':
+
         assert org_name in get_orgs(), "%s is not in the list of orgs in the Keychain" % org_name
 
     token = keyring.get_password(org_name, '')
@@ -67,12 +73,17 @@ def get_api_token(org_name):
 def set_api_token(org_name, token_value=None):
 
     if not org_name:
+
         org_name = input("Org Name: ")
 
-    if not token_value:
-        token_value = getpass.getpass()
-        assert token_value, "No token passed into function and no token value provided at prompt"
     
+    if not token_value:
+
+        token_value = getpass.getpass()
+
+        assert token_value, "No token passed into function and no token value provided at prompt"
+   
+
     # keyring.set_password will update an existing item
     #   or create an item if it does not exist
     keyring.set_password(org_name, '', token_value)

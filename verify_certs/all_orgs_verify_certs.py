@@ -11,14 +11,13 @@ import sys
 import randori_api
 from randori_api.rest import ApiException
 
-from keys.api_tokens import get_api_token
+from api_tokens import get_api_token, get_orgs
 
 configuration = randori_api.Configuration()
 
 org_name = os.getenv("RANDORI_ENV")
 
 configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
@@ -178,12 +177,8 @@ def cert_verification():
     for cert_host in cert_hosts:
         org_id = cert_host.org_id
         
-        outfile = org_id + ".json"
+        outfile = "verify_certs/results/" + org_id + ".json"
         
-        if (os.path.isfile(outfile)):
-            print('OrgID Exists: {}'.format(org_id))
-            return
-
         ports = get_ports_for_ip(cert_host.ip_id)
         
         for port in ports:
@@ -218,15 +213,9 @@ def cert_verification():
 
 
 if __name__ == '__main__':
-    path = '/Users/bj/.tokens/'
-    
-    #TODO: Rewrite to use list of orgs from Keychain
-    for filename in os.listdir(path):
-        print('Processing {}'.format(filename))
+    for org in get_orgs():
+        print('Processing {}'.format(org))
 
-        with open((path + filename), 'r+') as f:
-            for line in f:
-                token = line.rstrip('\n').rstrip(',')
+        configuration.access_token = get_api_token(org)
 
-        configuration.access_token = token
         cert_verification()

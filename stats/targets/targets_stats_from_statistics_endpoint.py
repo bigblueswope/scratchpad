@@ -4,24 +4,8 @@ import json
 import os
 import sys
 
-import randori_api
-from randori_api.rest import ApiException
-
-from time import sleep
-
-from keys.api_tokens import get_api_token
-
-configuration = randori_api.Configuration()
-
-org_name = os.getenv("RANDORI_ENV")
-
-configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
-
-configuration.host = "https://alpha.randori.io"
-
-r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
-
+import common_functions
+import entity_detector
 
 #Initial Query:
 #    Confidence Greater Than or Equal To Medium
@@ -48,16 +32,6 @@ initial_query = json.loads('''{
 
 
 
-def prep_query(query_object):
-
-   iq = json.dumps(query_object).encode()
-
-   query = base64.b64encode(iq)
-
-   return query
-
-
-
 def historical_target_counts(ttype, interval, count):
 
     if ttype in ('targets', 'top_targets'):
@@ -72,15 +46,18 @@ def historical_target_counts(ttype, interval, count):
 
     sort = ['-time']
 
-    query = prep_query(initial_query)
+    query = common_functions.prep_query(initial_query)
 
     
     try:
-        da_funct = getattr(r_api, 'get_statistics')
+        da_funct = getattr(common_functions.r_api, 'get_statistics')
+
         resp = da_funct(sort=sort, interval=interval, limit=limit, q=query)
 
-    except ApiException as e:
+    except common_functions.ApiException as e:
+
         print("Exception in RandoriApi->%s: %s\n" % ('get_statistics',e))
+
         sys.exit(1)
 
 
@@ -103,63 +80,72 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-
-    path = '/Users/bj/.tokens/'
-
+    # Two types of targets to count on the Trending Graph in Dashboard
     ttype = 'targets'
     #ttype = 'top_targets'
+
+    # Interval of 144 = 1 Day
     interval = 144
+
+    # Get the stats for 90 days
     count = 90
     
     daily_counts = {}
 
     if args.Org:
-        filename = args.Org
-        #TODO: Rewrite to use Org info from Keychain
-        with open((path + filename), 'r+') as f:
-            for line in f:
-                token = line.rstrip('\n').rstrip(',')
-        configuration.access_token = token
+
+        org = args.Org
+
+        common_functions.configuration.access_token = common_functions.get_api_token(org)
         
         stats = historical_target_counts(ttype, interval, count)
 
         for stat in stats.data:
+
             time_str = stat.time.strftime("%Y-%m-%d")
+
             target_count = stat.value
             
             try:
+            
                 daily_counts[time_str] += target_count
+                
             except KeyError:
+                
                 daily_counts[time_str] = target_count
         
         print(daily_counts)
+
         sys.exit(0)
 
 
     total_targets = 0
     
-    #TODO: Rewrite to use list of orgs from Keychain
-    for filename in os.listdir(path):
+    for org in common_functions.get_orgs():
+
         sleep(1)
-        sys.stderr.write('Processing %s\n' %filename)
+
+        sys.stderr.write('Processing %s\n' % org)
         
-        with open((path + filename), 'r+') as f:
-            for line in f:
-                token = line.rstrip('\n').rstrip(',')
-        
-        configuration.access_token = token
+        common_functions.configuration.access_token = common_functions.get_api_token(org)
         
         stats = historical_target_counts(ttype, interval, count)
 
         for stat in stats.data:
+            
             time_str = stat.time.strftime("%Y-%m-%d")
+            
             target_count = stat.value
             
             try:
                 daily_counts[time_str] += target_count
+            
             except KeyError:
+                
                 daily_counts[time_str] = target_count
         
-    #print(daily_counts)
     for dte, count in daily_counts.items():
+        
         print("%s,%i" % (dte, count))
+
+

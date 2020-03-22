@@ -43,9 +43,13 @@ example_url = 'https://alpha.randori.io/targets?limit=10&offset=0&q=eyJjb25kaXRp
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser(description = 'Decode UI URL')
+
     required = parser.add_argument_group('required arguments')
+
     required.add_argument("-i", "--input", required=True, help="URL to Decode")
+
     args = parser.parse_args()
     
     

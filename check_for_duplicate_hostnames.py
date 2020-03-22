@@ -1,34 +1,14 @@
 import base64
 import datetime
 import json
-import logging
-import logging.handlers
 import os
-from pathlib import Path
 import sys
 
-import randori_api
-from randori_api.rest import ApiException
+import common_functions
 
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
-
-from keys.api_tokens import get_api_token
-
-configuration = randori_api.Configuration()
-
-org_name = os.getenv("RANDORI_ENV")
-
-configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY")
-
-configuration.host = "https://alpha.randori.io"
-
-r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
 
 #Initial Query:
-#    Confidence Greater Than or Equal To Medium
-#    and
-#    Target Temptation Greater Than or Equal To High
+#    Confidence Greater Than or Equal To Zero
 initial_query = json.loads('''{
   "condition": "AND",
   "rules": [
@@ -41,27 +21,6 @@ initial_query = json.loads('''{
   "valid": true
   }''')
 
-
-
-def prep_query(query_object):
-
-   iq = json.dumps(query_object).encode()
-
-   query = base64.b64encode(iq)
-
-   return query
-
-
-
-def tt_to_string(tt):
-    if tt >= 40:
-        return 'Critical'
-    elif tt >= 30:
-        return 'High'
-    elif tt >= 15:
-        return 'Medium'
-    else:
-        return 'Low'
 
 ##########
 # Sample JSON returned by get_hostname
@@ -91,12 +50,14 @@ def iterate_hostnames():
 
     while more_targets_data:
         
-        query = prep_query(initial_query)
+        query = common_functions.prep_query(initial_query)
 
         try:
-            resp = r_api.get_hostname(offset=offset, limit=limit,
-                                    sort=sort, q=query)
-        except ApiException as e:
+            resp = common_functions.r_api.get_hostname(
+                        offset=offset, limit=limit,
+                        sort=sort, q=query)
+
+        except common_functions.ApiException as e:
             print("Exception in RandoriApi->get_target: %s\n" % e)
             sys.exit(1)
 
@@ -106,14 +67,17 @@ def iterate_hostnames():
             more_targets_data = False
         else:
             offset = max_records
-
+        
+        
         for hostname in resp.data:
+
+            print(hostname.hostname)
+
             try:
                 hostnames_dict[hostname.hostname] += 1
             except KeyError:
                 hostnames_dict[hostname.hostname] = 1
 
-            print(hostname.hostname)
                 
     
     for k,v in hostnames_dict.items():

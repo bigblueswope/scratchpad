@@ -1,6 +1,7 @@
 from threading import Thread
 from time import sleep
 from queue import Queue
+import base64
 import os
 import json
 import logging
@@ -8,14 +9,13 @@ import logging
 import randori_api
 from randori_api.rest import ApiException
 
-from keys.api_tokens import get_api_token
+from api_tokens import get_api_token, get_orgs
 
 configuration = randori_api.Configuration()
 
 org_name = os.getenv("RANDORI_ENV")
 
-# replaced with iteration over token files
-#configuration.access_token = get_api_token(org_name);
+configuration.access_token = get_api_token(org_name);
 
 configuration.host = "https://alpha.randori.io"
 
@@ -159,9 +159,8 @@ def do_work_for_org(token):
         along with the queue qr in which to store the results of the lookups
     '''
 
-    cert_hosts = [{'hostname': 'www.randori.com', 'port': 443}, {'hostname': 'expired.badssl.com', 'port': 443},
-    {'hostname': 'wrong.host.badssl.com', 'port': 443}]
-    #cert_hosts = output of iterate_hostnames
+    #cert_hosts = [{'hostname': 'www.randori.com', 'port': 443}, {'hostname': 'expired.badssl.com', 'port': 443}, {'hostname': 'wrong.host.badssl.com', 'port': 443}]
+    cert_hosts = iterate_hostnames()
 
     num_host_threads = min(10, len(cert_hosts))
 
@@ -211,9 +210,7 @@ def do_work_for_org(token):
 
 if __name__ == '__main__':
         
-    path = '/Users/bj/.tokens/'
-    
-    tokens = os.listdir(path)
+    tokens = get_orgs()
     
     q1 = Queue()
 

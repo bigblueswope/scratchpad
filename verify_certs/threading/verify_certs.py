@@ -1,7 +1,6 @@
-from __future__ import print_function
 from copy import copy
 from threading import Thread
-from Queue import Queue
+from queue import Queue
 import base64
 import concurrent.futures
 import http.client
@@ -18,15 +17,13 @@ import time
 import randori_api
 from randori_api.rest import ApiException
 
-from keys.api_tokens import get_api_token
+from api_tokens import get_api_token, get_orgs
 
 configuration = randori_api.Configuration()
 
 org_name = os.getenv("RANDORI_ENV")
 
-# replaced with iteration over token files
 configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
 
 configuration.host = "https://alpha.randori.io"
 
@@ -251,7 +248,7 @@ def get_cert_status(q, results):
 def multi_thread_lookup(cert_hosts):
     #set up the queue to hold all the urls
     q = Queue(maxsize=0)
-    # Use many threads (50 max, or one for each url)
+    # Use many threads (20 max, or one for each url)
     num_theads = min(20, len(cert_hosts))
 
     # Building results list same length as urls list
@@ -279,16 +276,11 @@ def multi_thread_lookup(cert_hosts):
 
     
 def cert_verification(org_name):
-    path = '/Users/bj/.tokens/'
     
     print('Processing {}'.format(org_name))
     #logging.info("Thread %s: starting", org_name)
     
-    with open((path + org_name), 'r+') as f:
-        for line in f:
-            token = line.rstrip('\n').rstrip(',')
-
-    configuration.access_token = token
+    configuration.access_token = get_api_token(org_name)
 
     broken_cert_hosts= []
     
@@ -323,12 +315,9 @@ if __name__ == '__main__':
     logging.basicConfig(format=format, level=logging.INFO,
                         datefmt='%H:%M:%S')
 
-    #TODO: Rewrite to use list of orgs from Keychain
-    path = '/Users/bj/.tokens/'
-
-    token_files = os.listdir(path)
+    orgs = get_orgs()
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-        executor.map(cert_verification, token_files)
+        executor.map(cert_verification, orgs)
 
 

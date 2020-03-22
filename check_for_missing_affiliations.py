@@ -79,7 +79,7 @@ if __name__ == '__main__':
         (uuid, date_timestamp) = parse_filename(file_name)
 
         org_name = lookup_org(uuid)
-        #print("Org Name:", org_name)
+        
         if org_name not in org_names:
             org_names.append(org_name)
         

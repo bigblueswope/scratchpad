@@ -5,8 +5,10 @@ import socket
 
 
 from threading import Thread
-from time import sleep
 from queue import Queue
+
+import common_functions
+import entity_detector
 
 
 def resolve_list_of_hostnames(hostname_list):
@@ -26,7 +28,7 @@ def resolve_list_of_hostnames(hostname_list):
             except socket.gaierror:
                 ip = ''
     
-            # insert tuple of hostname and IP into the Results Queue
+            # insert tuple of hostname and IP into the results list
             results.append((hostname, ip))
 
             # notify the queue work is done
@@ -61,8 +63,11 @@ def resolve_list_of_hostnames(hostname_list):
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description = 'Compare File With Domains to Existing Domains in Platform')
+
     optional = parser._action_groups.pop()
+
     required = parser.add_argument_group('required arguments')
+
     required.add_argument("-i", "--input", required=True, help="File with possible additional domains")
 
     args = parser.parse_args()
@@ -70,10 +75,12 @@ if __name__ == '__main__':
     new_hostnames = []
 
     with open(args.input, 'r+') as f:
-        for line in f:
-            new_host = line.rstrip('\n').rstrip(',').lower()
 
-            if new_host == 'domainname':
+        for line in f:
+
+            new_host = common_functions.line_cleaner(line)
+
+            if not new_host:
                 continue
             
             new_hostnames.append(new_host)
@@ -83,3 +90,6 @@ if __name__ == '__main__':
 
     for resolved_host,resolution in resolved_hosts:
         print("%s: %s" % (resolved_host, resolution))
+
+
+

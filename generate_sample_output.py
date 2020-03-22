@@ -4,22 +4,6 @@ import json
 import os
 import sys
 
-import randori_api
-from randori_api.rest import ApiException
-
-from keys.api_tokens import get_api_token
-
-configuration = randori_api.Configuration()
-
-org_name = os.getenv("RANDORI_ENV")
-
-configuration.access_token = get_api_token(org_name);
-#configuration.access_token = os.getenv("RANDORI_API_KEY");
-
-configuration.host = "https://alpha.randori.io"
-
-r_api = randori_api.RandoriApi(randori_api.ApiClient(configuration))
-
 
 #Initial Query:
 #    Confidence Greater Than or Equal To Zero
@@ -37,36 +21,32 @@ initial_query = json.loads('''{
 
 
 
-def prep_query(query_object):
-
-   iq = json.dumps(query_object).encode()
-
-   query = base64.b64encode(iq)
-
-   return query
-
-
-
 def get_sample_output(funct_name):
     offset = 0
     limit = 1
     sort = ['confidence']
 
-    query = prep_query(initial_query)
+    query = common_functions.prep_query(initial_query)
 
     
     try:
-        da_funct = getattr(r_api, funct_name)
+        da_funct = getattr(common_functions.r_api, funct_name)
 
         resp = da_funct(offset=offset, limit=limit,
                                 sort=sort, q=query)
-    except ApiException as e:
+
+    except common_functions.ApiException as e:
+
         print("Exception in RandoriApi->%s: %s\n" % (funct_name,e))
+
         sys.exit(1)
 
     for item in resp.data:
+
         print("#################\n#Sample JSON output for %s\n##################" % funct_name)
+
         print(item)
+
         print()
 
 
@@ -75,6 +55,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description = 'Compare File With Domains to Existing Domains in Platform')
 
     optional = parser._action_groups.pop()
+
     optional.add_argument("-e", "--endpoint", default=False,
         help="If the endpoint arg is provided, only show example output for the specified endpoint.")
 
@@ -91,16 +72,22 @@ if __name__ == '__main__':
 
     
     if args.list_endpoints:
+
         print("Possible endpoints:\n%s" % api_endpoints)
+
         sys.exit(0)
 
     if args.endpoint:
+
         funct_name = 'get_' + args.endpoint
+
         get_sample_output(funct_name)
 
     else:
     
         for api_endpoint in api_endpoints:
+
             funct_name = 'get_' + api_endpoint
+
             get_sample_output(funct_name)
         
