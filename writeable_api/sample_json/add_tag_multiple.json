@@ -1,0 +1,1 @@
+{"operations":[{"op":"add","path":"/tags/Atlanta Office","value":{}},{"op":"add","path":"/tags/Engineering","value":{}}],"q":{"condition":"OR","rules":[{"id":"table.id","field":"table.id","type":"object","input":"text","operator":"equal","value":"b38b317e-5308-47e9-a618-7f2f605c279e"}]}}

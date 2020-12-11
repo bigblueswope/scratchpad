@@ -4,6 +4,8 @@ import json
 import os
 import sys
 
+import common_functions
+
 
 #Initial Query:
 #    Confidence Greater Than or Equal To Zero
@@ -25,6 +27,9 @@ def get_sample_output(funct_name):
     offset = 0
     limit = 1
     sort = ['confidence']
+
+    #if funct_name == 'statistics':
+    #    initial_query = ''
 
     query = common_functions.prep_query(initial_query)
 
@@ -66,9 +71,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    api_endpoints = ['detection_target', 'detections_for_target', 'hostname', 'hostnames_for_ip',
-                        'ip', 'ips_for_hostname', 'ips_for_network', 'ips_for_service', 
-                        'network', 'ports_for_ip', 'service', 'target']
+    api_endpoints = ['get_all_detections_for_target', 'get_hostname', 'get_hostnames_for_ip',
+                        'get_ip', 'get_ips_for_hostname', 'get_ips_for_network', 'get_ips_for_service', 
+                        'get_network', 'get_ports_for_ip', 'get_service', 'get_target']
 
     
     if args.list_endpoints:
@@ -79,7 +84,7 @@ if __name__ == '__main__':
 
     if args.endpoint:
 
-        funct_name = 'get_' + args.endpoint
+        funct_name = args.endpoint
 
         get_sample_output(funct_name)
 
@@ -87,7 +92,5 @@ if __name__ == '__main__':
     
         for api_endpoint in api_endpoints:
 
-            funct_name = 'get_' + api_endpoint
-
-            get_sample_output(funct_name)
+            get_sample_output(api_endpoint)
         

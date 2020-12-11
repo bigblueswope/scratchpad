@@ -1,0 +1,2 @@
+{"operations":[{"op":"remove","path":"/tags/Atlanta Office","value":{}}],"q":{"condition":"OR","rules":[{"id":"table.id","field":"table.id","type":"object","input":"text","operator":"equal","value":"06461650-badf-4333-a625-7db1f4de4cf9"}]}}
+

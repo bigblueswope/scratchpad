@@ -1,8 +1,4 @@
-import base64
-import datetime
-import json
 import os
-from pathlib import Path
 import sys
 
 import common_functions
@@ -51,42 +47,30 @@ initial_query = json.loads('''{
 
 
 def iterate_ips_with_ports():
-    more_targets_data= True
-    offset = 0
-    limit = 200
-    sort = ['port']
     
     open_ports = {}
     
     while more_targets_data:
         
-        query = common_functions.prep_query(initial_query)
+        resp = common_functions.get_ports(initial_query)
 
-        try:
-            resp = common_functions.r_api.get_ports_for_ip(offset=offset, limit=limit,
-                                    sort=sort, q=query)
-        except common_functions.ApiException as e:
-            print("Exception in RandoriApi->get_target: %s\n" % e)
-            sys.exit(1)
+        for ip in resp:
 
-        max_records = offset + limit
-    
-        if resp.total <= max_records:
-            more_targets_data = False
-        else:
-            offset = max_records
-
-        for ip in resp.data:
             try:
+
                 open_ports[ip.port] += 1
+            
             except KeyError:
+            
                 open_ports[ip.port] = 1
 
         return open_ports
 
 if __name__ == '__main__':
+
     ips_with_ports = iterate_ips_with_ports()
     
     for port, count in ips_with_ports.items():
+
         print(count, port)
 

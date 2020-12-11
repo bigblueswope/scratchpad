@@ -1,0 +1,22 @@
+{
+    "domains": {
+        "webdamdb.com": "2019-12-03 15:56:48",
+        "webpt.com": "2020-05-04 18:48:40"
+    },
+    "hostnames": {
+        "ec2-3-88-88-137.compute-1.amazonaws.com": "2019-12-03 15:56:43",
+        "ec2-35-171-156-132.compute-1.amazonaws.com": "2019-12-03 15:56:46",
+        "ec2-54-208-81-3.compute-1.amazonaws.com": "2019-12-03 15:56:47",
+        "ec2-54-165-216-55.compute-1.amazonaws.com": "2019-12-12 08:37:17",
+        "ec2-52-205-34-67.compute-1.amazonaws.com": "2020-02-04 15:25:24",
+        "ec2-34-236-203-188.compute-1.amazonaws.com": "2020-02-04 15:25:26",
+        "ec2-52-11-58-126.us-west-2.compute.amazonaws.com": "2020-06-22 02:40:59",
+        "ec2-52-89-98-227.us-west-2.compute.amazonaws.com": "2020-06-22 02:41:05",
+        "ec2-52-38-243-237.us-west-2.compute.amazonaws.com": "2020-06-22 10:24:51",
+        "ec2-44-232-102-175.us-west-2.compute.amazonaws.com": "2020-10-14 05:25:42",
+        "ec2-54-196-114-4.compute-1.amazonaws.com": "2020-10-15 15:05:00",
+        "ec2-44-238-184-114.us-west-2.compute.amazonaws.com": "2020-11-02 13:18:35",
+        "ec2-44-240-210-12.us-west-2.compute.amazonaws.com": "2020-11-03 09:39:36",
+        "ec2-54-200-230-55.us-west-2.compute.amazonaws.com": "2020-11-06 23:54:43"
+    }
+}

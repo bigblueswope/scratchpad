@@ -1,0 +1,22 @@
+{
+    "operations": [
+        {
+            "op": "add",
+            "path": "/tags/YOUR_TAG_HERE",
+            "value": {}
+        }
+    ],
+    "q": {
+        "condition": "OR",
+        "rules": [
+            {
+                "id": "table.id",
+                "field": "table.id",
+                "type": "object",
+                "input": "text",
+                "operator": "equal",
+                "value": "REPLACE_ME_WITH_HOST_ID"
+            }
+        ]
+    }
+}

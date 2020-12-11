@@ -15,7 +15,7 @@ initial_query = json.loads('''{
     {
       "field": "table.confidence",
       "operator": "greater_or_equal",
-      "value": 0
+      "value": 60
     }
   ],
   "valid": true
@@ -25,7 +25,7 @@ initial_query = json.loads('''{
 
 if __name__ == '__main__':
 
-    for host in common_functions.get_hostnames(initial_query):
+    for host in common_functions.get_hosts(initial_query):
         
         print(host.hostname, host.confidence)
                 

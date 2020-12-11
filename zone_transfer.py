@@ -52,11 +52,16 @@ def try_zone_xfer(domain):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = 'Attempt DNS Zone Transfers of domains in a file')
+
     optional = parser._action_groups.pop()
+
     required = parser.add_argument_group('required arguments')
+
     required.add_argument("-i", "--input", required=True, help="File domains to attempt to transfer")
+
     optional.add_argument("-o", "--output", default=False,
         help="If the output arg/flag is provided, write transferred 'A' records to outfile.")
+
     parser._action_groups.append(optional)
 
     args = parser.parse_args()

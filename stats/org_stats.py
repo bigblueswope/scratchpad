@@ -40,7 +40,7 @@ def get_counts(endpoint, verbose):
         resp = da_funct(offset=offset, limit=limit,
                                 sort=sort, q=query)
 
-    except common_function.ApiException as e:
+    except common_functions.ApiException as e:
 
         print("Exception in RandoriApi->%s: %s\n" % (funct_name,e))
 

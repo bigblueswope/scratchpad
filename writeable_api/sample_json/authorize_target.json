@@ -1,0 +1,2 @@
+{"data":{"authorization_state":"Authorized"},"q":{"condition":"OR","rules":[{"id":"table.id","field":"table.id","type":"object","input":"text","operator":"equal","value":"079f60bf-cc6e-4e46-815d-bd91b0a1e066"}]}}
+

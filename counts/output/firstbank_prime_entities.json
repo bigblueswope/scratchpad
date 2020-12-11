@@ -1,0 +1,27 @@
+{
+    "domains": {
+        "efirstbank.com": "2020-05-12T13:50:54.923502+00:00",
+        "fnbwahoo.com": "2020-05-18T17:32:13.033381+00:00",
+        "efirstbank.bank": "2020-05-18T17:32:13.033381+00:00",
+        "firstbankescrow.net": "2020-05-18T17:32:13.033381+00:00",
+        "efirstbankmortgages.bank": "2020-05-18T17:32:13.033381+00:00",
+        "startandgrowtoday.bank": "2020-05-18T17:32:13.033381+00:00",
+        "firstbank.bank": "2020-05-18T17:32:13.033381+00:00",
+        "fb.bank": "2020-05-18T17:32:13.033381+00:00",
+        "efirstbankblog.com": "2020-05-18T17:32:13.033381+00:00",
+        "1stbankofcolorado.com": "2020-05-18T17:32:13.033381+00:00",
+        "1stbank.com": "2020-05-18T17:32:13.033381+00:00",
+        "biliti.com": "2020-05-18T17:32:13.033381+00:00"
+    },
+    "hostnames": {
+        "enc3.efirstbank.bank": "2020-05-18T18:27:11.359856+00:00",
+        "goodloan.efirstbank.com": "2020-05-18T18:27:11.359856+00:00",
+        "service5.ha.efirstbank.com": "2020-05-18T18:27:11.359856+00:00",
+        "mdev6.1stbankofcolorado.com": "2020-05-18T18:27:11.359856+00:00",
+        "av.efirstbank.com": "2020-05-18T18:27:11.359856+00:00",
+        "antispam.biliti.com": "2020-05-18T18:27:11.359856+00:00",
+        "smtpauth.fnbwahoo.com": "2020-05-18T18:27:11.359856+00:00",
+        "enc4.efirstbank.bank": "2020-05-18T18:27:11.359856+00:00",
+        "ext2.1stbankofcolorado.com": "2020-05-18T18:27:11.359856+00:00"
+    }
+}

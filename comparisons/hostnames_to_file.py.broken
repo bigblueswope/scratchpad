@@ -1,0 +1,284 @@
+import argparse
+import base64
+import datetime
+import json
+import os
+import sys
+import socket
+
+from threaded_name_resolution import resolve_list_of_hostnames
+
+import common_functions
+import entity_detector
+
+#Note:
+#  Instead of print statements, much of the output uses
+#  sys.stderr.write
+#  This is so you can pipe the output of hosts that need to be added
+#      into another program or redirect to a file (which can be done 
+#      by providing a -o outfile argument too).
+
+
+#Initial Query:
+#    Confidence Greater Than or Equal To 0
+initial_query = json.loads('''{
+  "condition": "AND",
+  "rules": [
+    {
+      "field": "table.confidence",
+      "operator": "greater_or_equal",
+      "value": 0
+    }
+  ],
+  "valid": true
+}
+''')
+
+
+
+def get_platform_ips():
+    platform_ips = {}
+
+    more_data= True
+    offset = 0
+    limit = 1000
+    sort = ['ip']
+    
+    query = common_functions.prep_query(initial_query)
+    
+    while more_data:
+
+        try:
+            resp = common_functions.r_api.get_ip(offset=offset, limit=limit,
+                                    sort=sort, q=query)
+        except common_functions.ApiException as e:
+            print("Exception in RandoriApi->get_ip: %s\n" % e)
+            sys.exit(1)
+
+        max_records = offset + limit
+
+        if resp.total <= max_records:
+            more_data = False
+        else:
+            offset = max_records
+
+        for item in resp.data:
+            if not item.ip in platform_ips.keys():
+                platform_ips[item.ip] = item.confidence
+
+    return platform_ips
+
+
+
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description = 'Compare File With Hostnames to Existing Hostnames in Platform')
+
+    optional = parser._action_groups.pop()
+
+    required = parser.add_argument_group('required arguments')
+
+    required.add_argument("-i", "--input", required=True, help="File with possible additional hosts")
+
+    optional.add_argument("-o", "--output", default=False, 
+        help="If the output arg/flag is provided, write missing hosts to outfile.")
+
+    optional.add_argument("-r", "--resolution", action='store_true', default=False,
+        help="If the resolution arg/flag is provided, print the IP with the hostname")
+
+    optional.add_argument("-n", "--name_first", action='store_true', default=False,
+        help="If resolution flag is true, print the name first instead of the resolution")
+
+    parser._action_groups.append(optional)
+
+    args = parser.parse_args()
+
+    new_hosts = {}
+    new_ips = []
+    both_hosts = {}
+    both_ips = {}
+    
+    addl_hosts = []
+    hosts_wo_parents = []
+    non_hostnames = []
+    
+    count_of_input_items = 0
+    
+    non_resolving_host_count = 0
+    hosts_wo_ips_in_platform = 0
+    
+    platform_ips = get_platform_ips()
+    
+    platform_domains = []
+    platform_hosts = {}
+    
+    platform_entities = common_functions.get_hostnames(initial_query)
+    
+    for item in platform_entities:
+
+        entity = item.hostname
+        confidence = item.confidence
+
+        ent_type, ent_name, _ = entity_detector.detect_entity(entity)
+
+        if ent_type == 'domains':
+            platform_domains.append(ent_name)
+            continue
+        
+        platform_hosts[entity] = confidence
+
+    
+    with open(args.input, 'r+') as f:
+
+        for line in f:
+
+            new_hostname = common_functions.line_cleaner(line)
+
+            if not new_hostname:
+                continue
+
+            count_of_input_items += 1
+            
+            ent_type, ent_name, ent_domain = entity_detector.detect_entity(new_hostname)
+
+
+            if not ent_type == 'hostnames':
+                
+                if ent_type == 'domains' and ent_domain in platform_domains:
+                    
+                    continue
+
+                if not new_hostname in non_hostnames:
+                    
+                    non_hostnames.append(new_hostname)
+                
+                continue
+
+            # entity is not a child of an existing platform domain 
+            if not ent_domain in platform_domains:
+                
+                if not new_hostname in hosts_wo_parents:
+                    
+                    hosts_wo_parents.append(new_hostname)
+                
+                continue
+            
+            
+            # host/hostname does not exist in the Platform and is not a duplicate in the input file
+
+            #if not new_hostname in ( platform_hosts.keys() and addl_hosts):
+            if not new_hostname in platform_hosts.keys() and not new_hostname in addl_hosts:
+                
+                addl_hosts.append(new_hostname)
+            
+            else:
+                # hostname/host is already in the platform so create an entry in 
+                #   the existing hostname dictionary with a value of the Confidence
+                try:
+                    both_hosts[new_hostname] = platform_hosts[new_hostname]
+                except KeyError:
+                    # new_hostname is a duplicate in the input file
+                    #   not an existing Platform host/hostname
+                    #   so we don't add it to the list of "in both places"
+                    continue
+    
+
+
+    
+    sys.stderr.write("\n###################\nHostnames To Be Added:\n\n")
+
+    for hn, ip in resolve_list_of_hostnames(addl_hosts):
+        
+        if ip:
+
+            try:
+
+                if platform_ips[ip] >= 60:
+
+                    both_ips[ip] = platform_ips[ip]
+
+                    continue
+            
+            except KeyError:
+
+                pass
+            
+            
+            if not ip in new_ips:
+                
+                new_ips.append(ip)
+                
+                new_hosts[hn] = ip
+                
+                hosts_wo_ips_in_platform += 1
+
+        else:
+
+            non_resolving_host_count += 1
+            continue        
+        
+        if args.resolution:
+            
+            if args.name_first:
+                
+                print(hn, ip)
+                
+            else:
+
+                print(ip, hn)
+        
+        else:
+
+            print(hn)
+    
+
+    
+    if args.output:
+
+        with open(args.output, 'w+') as outfile:
+
+            for host,host_ip in new_hosts.items():
+                
+                if args.resolution:
+                    
+                    if args.name_first:
+                        
+                        outfile.write("%s %s\n" % (host,host_ip))
+                        
+                    else:
+                        
+                        outfile.write("%s %s\n" % (host_ip,host))
+                    
+                else:
+                    
+                    outfile.write("%s\n" % (host))
+
+
+
+            
+    sys.stderr.write("\nCount of hostnames in input file: %i\n" % count_of_input_items)
+    
+    sys.stderr.write("\nCount of unique hostnames in input file and not in platform: %i\n" % len(addl_hosts))
+    
+    sys.stderr.write("\nCount of hostnames in Platform and input file: %i\n" % len(both_hosts))
+
+    sys.stderr.write("\nCount of hostnames in input file with unique IPs: %i\n" % len(new_hosts))
+    
+    sys.stderr.write("\nCount of hostnames that do not have IPs in Platform and will be added to Platform: %i\n" % hosts_wo_ips_in_platform)
+
+    sys.stderr.write("\nCount of non-hostnames input file: %i\n" % len(non_hostnames))
+
+    sys.stderr.write("\nCount of non-resolving hostnames not in Platform: %i\n" % non_resolving_host_count)
+    
+    sys.stderr.write("\nCount of hosts without parent domains in Platform: %i\n" % len(hosts_wo_parents))
+
+    #sys.stderr.write("\nHostnames and their Confidence in both Platform and input file: %s\n" % both_hosts)
+
+    #sys.stderr.write("\nIPs and their Confidence in both Platform and input file: %s\n" % both_ips)
+    
+    sys.stderr.write("\nHosts without parent domains in Platform: %s\n" % hosts_wo_parents)
+    
+    sys.stderr.write("\nNon-Hostnames in input file: %s\n" % non_hostnames)
+
+

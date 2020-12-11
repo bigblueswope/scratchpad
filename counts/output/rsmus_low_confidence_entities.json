@@ -1,0 +1,15 @@
+{
+    "domains": {},
+    "hostnames": {
+        "ec2-34-197-205-34.compute-1.amazonaws.com": "2019-02-10 00:23:54",
+        "61.101.229.35.bc.googleusercontent.com": "2019-02-25 20:35:59",
+        "ec2-3-17-174-30.us-east-2.compute.amazonaws.com": "2019-04-18 05:11:59",
+        "ec2-52-6-19-39.compute-1.amazonaws.com": "2020-09-05 15:55:22",
+        "ec2-52-0-214-116.compute-1.amazonaws.com": "2020-09-05 15:55:33",
+        "academy.acceleratepolicing.com": "2020-09-05 15:56:52",
+        "ec2-52-7-235-41.compute-1.amazonaws.com": "2020-09-06 21:18:11",
+        "autodiscover.bgcb.org": "2020-10-08 04:36:04",
+        "autodiscover.abpd.org": "2020-10-08 04:36:07",
+        "autodiscover.enterpriseminnesota.org": "2020-10-08 04:36:10"
+    }
+}

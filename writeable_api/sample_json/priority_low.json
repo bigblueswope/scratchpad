@@ -1,0 +1,2 @@
+{"data":{"impact_score":"Low"},"q":{"condition":"OR","rules":[{"id":"table.id","field":"table.id","type":"object","input":"text","operator":"equal","value":"31833367-ff96-468a-b51e-10c28c8b5364"}]}}
+

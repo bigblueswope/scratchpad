@@ -1,0 +1,54 @@
+service_id,service_name,service_version,target_temptation,org_count,instance_count,applicability,criticality,enumerability,post_exploit,private_weakness,public_weakness,research
+9c4b9ef8-ff2c-4838-b8be-2db5a34329e2,Netscaler Gateway,,73,1,1,3,3,3,4,5,5,3
+c372c825-6430-4e7a-8422-1af279ab134a,GlobalProtect Portal,,37,1,2,3,4,1,4,0,3,4
+52fe40f4-73c6-45f3-9c03-d222bc70a78b,Apache,2.4.38,33,1,4,5,3,4,3,0,3,3
+c40a489e-a04a-4cc3-89ae-efbc08ab47cc,Apache,2.2.27,32,1,2,3,3,4,3,0,3,3
+8656ad0e-b39f-4df3-bd3a-b95ef9d8cacb,PHP,5.4.17,30,1,2,2,2,4,3,0,3,4
+d019b64a-3729-4d9d-849d-56917f4bea71,Microsoft-IIS,7,29,1,1,3,2,3,4,1,3,3
+f1cfdc01-fbbc-4201-81f9-b317ea9af991,PHP,7.3.13,29,1,1,4,2,4,2,0,3,4
+6314ddb0-b7d7-4a78-8193-2c93715fe26c,Apache,2.4.39,27,1,2,5,3,4,3,0,2,3
+1f2f306e-e49b-44b8-a0fd-7181fc3426aa,Apache,2.4.6,27,1,2,5,3,4,3,0,2,3
+7c57993a-ce4c-48b9-b066-ecb63c024abe,cisco-IOS,,27,1,3,4,4,1,2,1,2,4
+2c9a5995-4288-45bc-8ab5-5d52fa63154d,Apache,2.4.7,27,1,4,5,3,4,3,0,2,3
+31eb96d9-0c6d-4f7c-b0c3-8f0d87c4178b,nginx,1.16.1,26,1,4,4,3,4,3,0,2,3
+388f9725-0a82-4e69-8704-2eeb3f288167,nginx,1.16.0,26,1,2,4,3,4,3,0,2,3
+6be41a51-efcf-408a-9b20-896a32cb5e94,nginx,1.17.3,26,1,2,4,3,4,3,0,2,3
+17629589-88c7-498b-811b-4a86dcb835d8,Drupal,8,25,1,3,4,2,2,3,0,3,3
+d051fe69-a91f-45e0-a4a7-103cf09b0971,Apache Tomcat,,23,1,1,5,3,1,3,0,1,5
+4f69cb41-cfba-4f70-9d21-2d772bd3438f,IBM_HTTP_Server,,23,1,1,3,2,1,3,0,3,3
+40db6e1c-0fa4-492c-bb6c-c8b07cda75db,nginx,1.14.1,22,1,4,5,3,4,3,0,1,3
+e7693a07-0800-4f14-952b-266c38c2fe6c,nginx,1.14.0,22,1,2,5,3,4,3,0,1,3
+c2b2eb3b-f415-4b83-bee6-e6db027fa11f,Microsoft-IIS,7.5,22,1,5,3,2,2,3,0,3,2
+7dec2bc5-c1f7-4531-910b-eda3990ffe12,nginx,,22,1,25,5,3,4,3,0,1,3
+ce7b04b1-1596-4019-9e5f-d16bddaf5f1a,Apache,Unknown,21,1,14,5,3,1,3,0,2,3
+1f30e955-2750-4c10-b64f-eec2eec9ba6e,OpenSSL,1.0.2k-fips,21,1,2,3,3,3,3,0,2,2
+0fcf8d20-863f-48d6-a2c6-e5aa480020c7,Microsoft-HTTPAPI,2,21,1,14,5,2,3,3,1,2,3
+ea5d9bbb-4b67-4480-9b7a-403e6233b456,PHP,7.2.31,19,1,1,4,2,4,2,0,1,4
+76b25dc3-feb8-46db-852e-66fc5401fe40,PHP,7.3.19,19,1,1,4,2,4,2,0,1,4
+2c17ddf6-16c9-4e00-98b1-4a8e35ba9d62,Microsoft-IIS,10,19,1,7,5,2,3,2,1,2,3
+15a145ed-bbd4-48f7-adb4-107aed6adea9,Phusion Passenger,,18,1,2,2,3,1,3,0,2,2
+31d3cf1d-428d-4835-8cd8-89be157431ad,PulseSecure VPN Portal,,18,1,1,2,4,1,1,0,1,3
+dde0d8e4-1893-4362-86aa-7aa2696a2003,F5 BigIP,,17,1,84,4,3,1,2,0,1,4
+402fe9e2-514f-4819-bb31-2baf68e1ba19,OpenSSL,1.0.2r-fips,17,1,2,2,3,3,3,0,1,2
+10d05c98-7380-4ede-b15d-0488f2e98e85,Express,,17,1,3,4,2,1,3,0,2,3
+56ab2769-7d57-43b4-9d94-7d018800fed6,ASP.NET,,16,1,20,3,2,1,3,0,2,3
+40499236-1980-49e5-856c-50ebd0b6e665,nginx,1.19.0,15,1,1,2,3,3,3,0,0,2
+9bf6c9dc-f7f7-4692-907e-7f820bcdc9f1,nginx,1.19.2,15,1,1,2,3,3,3,0,0,2
+804efbb9-5a1d-4534-8f6c-e7e1605657c3,Microsoft-IIS,8.5,12,1,13,4,2,2,3,0,1,2
+1dff7b5d-1703-4ef6-9373-bd09ec192be3,WordPress,5.3.2,12,1,1,3,0,3,3,0,1,3
+2cd21611-3dfa-4d03-968b-61f651771dbd,CloudFront,,10,1,68,5,2,1,2,0,1,2
+4f4f0d49-2a98-49aa-a9f8-15b8ff265d66,AkamaiGHost,,9,1,37,5,2,1,3,0,0,0
+6209252f-0749-4973-a918-d00d26b0a259,Amazon Web Services - Elastic Load Balancer,2,8,1,8,4,2,2,2,0,0,1
+ee59cd35-5c16-4c15-849b-067b295fc975,EFX SFTPp,,7,1,1,1,2,1,3,0,0,0
+05b6790c-8bbf-474e-bf36-62f54bc314ad,Maverick_SSHD,,0,1,3,0,0,0,0,0,0,0
+37e561ef-3552-4cd8-86d4-c75b6f0b0f54,RTC,7.0,0,1,6,0,0,0,0,0,0,0
+afa8b7f6-5e01-4689-9bdf-4c706074c98b,HTTP Server,,0,1,3,0,0,0,0,0,0,0
+28d59feb-ba04-4852-aeab-9d41a68aa2a1,Craft CMS,,0,1,1,0,0,0,0,0,0,0
+25f26f3a-074d-4efa-a820-d06e22b169f9,sw-cp-server,,0,1,1,0,0,0,0,0,0,0
+e5603ed3-53ed-4966-bed0-405df8a26560,PleskLin,,0,1,1,0,0,0,0,0,0,0
+5e07696f-970e-4446-954e-e6da18d02ebf,server,,0,1,2,0,0,0,0,0,0,0
+e853ee71-967d-41e2-aadf-8227f3e01c72,nginx + Phusion Passenger,,0,1,2,0,0,0,0,0,0,0
+10442b96-9ec8-497f-bc5b-123ae0264bd2,Oracle-Application-Server-11g,,0,1,1,0,0,0,0,0,0,0
+081663dc-2497-4f66-864b-b9fe9ce7dcc7,AmazonS3,,0,1,1,0,0,0,0,0,0,0
+57f05169-61bd-40aa-a8ce-9f21daa1d48b,Unknown,,0,1,1,0,0,0,0,0,0,0
+f86e5e56-5a5f-4df0-9522-d456ca4e6829,Pantheon,,0,1,2,0,0,0,0,0,0,0

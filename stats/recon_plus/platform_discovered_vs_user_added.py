@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
         common_functions.configuration.access_token = common_functions.get_api_token(org);
 
-        platform_domains = get_hostnames(initial_query)
+        platform_domains = common_functions.get_hosts(initial_query)
 
         discovered_domains = []
         user_domains = []

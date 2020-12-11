@@ -1,0 +1,20 @@
+{
+    "domains": {
+        "stroock.com": "2020-02-11T20:16:21.121111+00:00",
+        "stroock.net": "2020-02-12T23:27:40.987266+00:00",
+        "stroockretiredpartner.com": "2020-02-12T23:27:40.987266+00:00"
+    },
+    "hostnames": {
+        "access.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "reaction.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "gwabbitia.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "activesync2.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "mailhost02.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "marketing.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "remoteaccess.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "remoteaccessduo.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "sslvpn.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "mailhost01.stroock.com": "2020-02-13T02:26:57.056246+00:00",
+        "desktop.stroock.com": "2020-02-13T02:26:57.056246+00:00"
+    }
+}

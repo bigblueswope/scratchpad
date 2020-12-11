@@ -35,6 +35,10 @@ if __name__ == '__main__':
 
         sys.exit(1)
     
+    if 'REPLACE_ME' in json.dumps(initial_query):
+        print("'REPLACE_ME' found in the initial_query.  Invalid query.  Fix query and try again.")
+        sys.exit(1)
+
     for ip in common_functions.get_ips(initial_query):
 
         print(ip)

@@ -23,7 +23,7 @@ initial_query = json.loads('''{
     {
       "field": "table.port",
       "operator": "equal",
-      "value": "REPLACE.ME"
+      "value": ""
     },
     {
       "field": "table.state",

@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     try:
 
-        for host in common_functions.get_hostnames(initial_query):
+        for host in common_functions.get_hosts(initial_query):
 
             print(host)
 

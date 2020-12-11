@@ -1,0 +1,22 @@
+{
+    "domains": {
+        "armellini.com": "2019-12-19T16:38:40.057525+00:00",
+        "drivearmellini.com": "2019-12-23T18:13:57.104947+00:00",
+        "armellini.net": "2020-01-27T19:44:05.439036+00:00",
+        "armellinistorage.com": "2020-01-27T19:44:55.611837+00:00"
+    },
+    "hostnames": {
+        "mail.armellini.com": "2019-12-23T18:48:05.798862+00:00",
+        "smtp4.armellini.com": "2019-12-23T18:48:05.798862+00:00",
+        "vpn.armellini.com": "2019-12-23T18:48:05.798862+00:00",
+        "smtp.armellini.com": "2019-12-23T18:48:05.798862+00:00",
+        "blog.armellini.com": "2019-12-23T18:48:05.798862+00:00",
+        "smtp3.armellini.com": "2019-12-23T18:48:05.798862+00:00",
+        "aisqldev02.armellini.com": "2020-06-27T13:18:51.565824+00:00",
+        "10.armellini.com": "2020-06-27T13:22:17.265611+00:00",
+        "mis.armellini.com": "2020-06-27T13:22:17.265611+00:00",
+        "drive.armellini.com": "2020-06-27T13:22:17.265611+00:00",
+        "aipbgwebsrvr01.armellini.com": "2020-06-28T16:11:24.206028+00:00",
+        "aivsftlafb.armellini.com": "2020-06-28T16:37:06.301774+00:00"
+    }
+}

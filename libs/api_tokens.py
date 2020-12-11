@@ -9,11 +9,20 @@ import sys
 # https://stackoverflow.com/a/24165635/6178742
 # 16,777,110 characters
 
+# Max string length will apply to the keychain entry called 'orgs'
+#  That is a python list of every org in the keychain and it 
+#  is used to iterate over all orgs.
+
 if platform.system() == 'Darwin':
 
-    keychain_file = os.environ.get('KEYCHAIN_PATH')
+    keychain_file = os.environ.get('API_AUTH_PATH')
 
-    assert keychain_file, "OS Environment Variable 'KEYCHAIN_PATH' is not defined"
+    assert keychain_file, "OS Environment Variable 'API_AUTH_PATH' is not defined"
+
+    kr = keyring.get_keyring()
+
+    kr.keychain = str(keychain_file)
+
 
 
 def get_orgs():
@@ -24,12 +33,12 @@ def get_orgs():
         
         Returns a sorted list with org names
     '''
-    orgs = keyring.get_password('orgs', '')
+    orgs = kr.get_password('orgs', '')
     
     orgs = json.loads(orgs)
 
     orgs = sorted(orgs)
-    
+
     return orgs
 
 
@@ -61,13 +70,28 @@ def get_api_token(org_name):
 
     if not org_name == 'orgs':
 
-        assert org_name in get_orgs(), "%s is not in the list of orgs in the Keychain" % org_name
+        assert org_name in get_orgs(), "%s is not in the list of orgs in the Keychain %s " % (org_name, keychain_file)
 
-    token = keyring.get_password(org_name, '')
+    token = kr.get_password(org_name, '')
+
+    assert token, "{} does not have an entry in the Keychain {}".format(org_name, keychain_file)
     
     return token
 
 
+
+
+def update_api_token(org_name, token_value=None):
+    
+    if not org_name:
+        
+        org_name = input('Org Name: ')
+    
+    if not token_value:
+        
+        token_value = input("API Token: ")
+
+        assert token_value, "No token passed into function and no token value provided at prompt"
 
 
 def set_api_token(org_name, token_value=None):
@@ -79,14 +103,14 @@ def set_api_token(org_name, token_value=None):
     
     if not token_value:
 
-        token_value = getpass.getpass()
-
+        #token_value = getpass.getpass()
+        token_value = input("API Token: ")
         assert token_value, "No token passed into function and no token value provided at prompt"
    
 
-    # keyring.set_password will update an existing item
+    # kr.set_password will update an existing item
     #   or create an item if it does not exist
-    keyring.set_password(org_name, '', token_value)
+    kr.set_password(org_name, '', token_value)
 
     existing_orgs = get_orgs()
 
@@ -96,21 +120,24 @@ def set_api_token(org_name, token_value=None):
         
         updated_orgs = json.dumps(existing_orgs)
         
-        keyring.set_password('orgs', '', updated_orgs)
+        kr.set_password('orgs', '', updated_orgs)
  
 
 
 
-def delete_api_token(org_name):
+def delete_api_token(org_name=None):
     
+    if not org_name:
+
+        org_name = input("Org Name To Delete From The API Keyring: ")
+
     try:
         
-        keyring.delete_password(org_name, '')
+        kr.delete_password(org_name, '')
 
     except keyring.errors.PasswordDeleteError:
         
-        pass
-
+        print(f'Could not delete api token for org: {org_name}')
 
     existing_orgs = get_orgs()
 
@@ -120,14 +147,44 @@ def delete_api_token(org_name):
 
         updated_orgs = json.dumps(existing_orgs)
         
-        keyring.set_password('orgs', '', updated_orgs)
+        kr.set_password('orgs', '', updated_orgs)
+
+        print(f'Removed {org_name} from list of existing orgs')
+
+
+
+def sync_orgs_with_tokens():
+
+    existing_orgs = get_orgs()
+
+    revised_orgs = []
+
+    for org_name in existing_orgs:
+
+        try:
+
+            pw = get_api_token(org_name)
+
+            revised_orgs.append(org_name)
+
+        except AssertionError:
+
+            print("No Token for {}".format(org_name))
+    
+    updated_orgs = json.dumps(revised_orgs)
+
+    kr.set_password('orgs', '', updated_orgs)
+    
  
 
 
 
 def initialize_orgs():
 
-    orgs = get_orgs()
+    try:
+        orgs = get_orgs()
+    except TypeError:
+        orgs = None
 
     if orgs:
         
@@ -141,3 +198,7 @@ def initialize_orgs():
 
 
 
+
+def iterate_keys():
+    for item in keyring.get_keyring().get_preferred_collection().get_all_items():
+        print(item.get_label(), item.get_attributes())
